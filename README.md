@@ -11,10 +11,11 @@ Requirements: Python 3.12-3.14 and
 [`uv`](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```sh
-uv sync
 cp -n .env.example .env
-uv run python backend/manage.py migrate
-uv run python backend/manage.py runserver 127.0.0.1:8000
+cd backend
+uv sync
+uv run python manage.py migrate
+uv run python manage.py runserver 127.0.0.1:8000
 ```
 
 The backend then exposes:
@@ -33,19 +34,21 @@ Until the import workflow lands, a record can be created through the Django
 shell:
 
 ```sh
-uv run python backend/manage.py shell -c \
+cd backend
+uv run python manage.py shell -c \
   'from sites.models import Site; Site.objects.create(name="Example Solar", address="200 W Washington St, Chicago, IL")'
 ```
 
 ## Backend verification
 
 ```sh
+cd backend
 uv run pytest
-uv run mypy backend
-uv run ruff check backend
-uv run ruff format --check backend
-uv run python backend/manage.py check
-uv run python backend/manage.py makemigrations --check --dry-run
+uv run mypy .
+uv run ruff check .
+uv run ruff format --check .
+uv run python manage.py check
+uv run python manage.py makemigrations --check --dry-run
 ```
 
 Automated tests cannot reach the network by construction: `pytest-socket` is
