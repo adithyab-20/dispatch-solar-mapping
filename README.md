@@ -1,0 +1,1 @@
+# dipatch-solar-mapping
