@@ -2,6 +2,7 @@ import json
 import logging
 import math
 from dataclasses import dataclass
+from typing import Never
 
 import requests
 from django.conf import settings
@@ -34,6 +35,10 @@ class SolarResourceProviderError(ValueError):
     def __init__(self, error_count: int) -> None:
         self.error_count = error_count
         super().__init__("Solar Resource provider reported an error")
+
+
+def _reject_non_standard_json_constant(_: str) -> Never:
+    raise UnexpectedSolarResourceResponse
 
 
 def fetch_solar_resource(site: Site) -> None:
@@ -119,7 +124,10 @@ def parse_solar_resource_response(response_text: str) -> SolarResourceResult:
     if not isinstance(response_text, str):
         raise UnexpectedSolarResourceResponse
     try:
-        payload = json.loads(response_text)
+        payload = json.loads(
+            response_text,
+            parse_constant=_reject_non_standard_json_constant,
+        )
     except json.JSONDecodeError as error:
         raise UnexpectedSolarResourceResponse from error
     if not isinstance(payload, dict):

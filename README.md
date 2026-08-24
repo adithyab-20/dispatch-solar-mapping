@@ -57,10 +57,10 @@ from NLR using its coordinates; unresolved and geocoding-failed sites leave
 downstream work `blocked`. Each provider stage commits its pending state before
 I/O and stores either canonical results or a safe, stage-specific failure.
 Byte-identical addresses share one handled geocoding result during a single
-command run, while every resolved record makes its own Solar Resource request.
-Formatting variants remain separate geocoding requests, the cache is discarded
-when the command exits, and repeating an unchanged import makes no provider
-request.
+command run, while Solar Resource outcomes are never reused between resolved
+records. Formatting variants remain separate geocoding requests, the cache is
+discarded when the command exits, and repeating an unchanged import makes no
+provider request.
 
 The public Nominatim service is appropriate here only for this small local
 assessment. The importer sends a custom User-Agent, serializes requests, spaces
@@ -92,4 +92,5 @@ variables already present in the environment. `CONTACT_EMAIL` is included in
 the Nominatim User-Agent when present; otherwise the importer logs a warning
 and still sends a descriptive application User-Agent. `NLR_API_KEY` is required
 for Solar Resource retrieval; when it is absent, resolved sites retain a safe
-stage-specific configuration failure without making an NLR request.
+stage-specific configuration failure without making an NLR request. The NLR
+developer APIs allow 1,000 requests per hour per key by default.

@@ -136,6 +136,16 @@ def payload_without_month(metric_name: str, month: str) -> str:
     return json.dumps(payload)
 
 
+def payload_without_metric_field(metric_name: str, field: str) -> str:
+    payload = deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)
+    outputs = payload["outputs"]
+    assert isinstance(outputs, dict)
+    metric = outputs[metric_name]
+    assert isinstance(metric, dict)
+    metric.pop(field)
+    return json.dumps(payload)
+
+
 def create_resolved_site() -> Site:
     return Site.objects.create(
         name="Boulder Solar",
@@ -180,7 +190,7 @@ def test_import_fetches_and_persists_canonical_solar_resource_data_after_commit(
         Mock(return_value=resolved_nominatim_response()),
     )
 
-    def get(*args: object, **kwargs: object) -> Mock:
+    def assert_pending_then_respond(*args: object, **kwargs: object) -> Mock:
         assert connection.in_atomic_block is False
         pending_site = Site.objects.get()
         assert pending_site.solar_resource_status == ProcessingStatus.PENDING
@@ -195,7 +205,7 @@ def test_import_fetches_and_persists_canonical_solar_resource_data_after_commit(
             text=json.dumps(deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)),
         )
 
-    solar_get = Mock(side_effect=get)
+    solar_get = Mock(side_effect=assert_pending_then_respond)
     monkeypatch.setattr(SOLAR_RESOURCE_SESSION, "get", solar_get)
 
     call_command("import_sites", import_path, mode="upsert")
@@ -366,6 +376,25 @@ def test_missing_api_key_fails_without_requesting(
             ),
             id="incomplete-months",
         ),
+        pytest.param(
+            FailureCase(
+                expected_error="Solar Resource returned an unexpected response",
+                response_text=payload_without_metric_field("avg_dni", "annual"),
+            ),
+            id="missing-consumed-field",
+        ),
+        pytest.param(
+            FailureCase(
+                expected_error="Solar Resource returned an unexpected response",
+                response_text=json.dumps(
+                    {
+                        **deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD),
+                        "warnings": [float("nan")],
+                    }
+                ),
+            ),
+            id="non-standard-json-constant",
+        ),
     ],
 )
 def test_handled_failures_clear_stale_results_without_exposing_provider_details(
@@ -406,6 +435,24 @@ def test_handled_failures_clear_stale_results_without_exposing_provider_details(
     assert site.monthly_solar_data is None
     assert "secret" not in site.solar_resource_error.lower()
     assert "secret" not in caplog.text.lower()
+
+
+def test_source_does_not_reference_the_retired_nlr_hostname() -> None:
+    project_root = Path(__file__).resolve().parents[3]
+    source_paths = [
+        *sorted((project_root / "backend" / "config").rglob("*.py")),
+        *sorted((project_root / "backend" / "sites").rglob("*.py")),
+        project_root / "backend" / "manage.py",
+        project_root / "backend" / "pyproject.toml",
+        project_root / ".env.example",
+        project_root / "README.md",
+    ]
+    retired_hostname = "developer." + "nrel.gov"
+
+    assert all(
+        retired_hostname not in path.read_text(encoding="utf-8")
+        for path in source_paths
+    )
 
 
 @pytest.mark.django_db
