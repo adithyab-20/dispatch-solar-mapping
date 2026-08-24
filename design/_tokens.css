@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --ground:#F7F7F8; --panel:#FFFFFF; --panel-2:#F1F1F1; --sunk:#F5F5F5;
+  --rule:#E2E2E2; --rule-strong:#C2C2C2;
+  --ink:#101010; --ink-2:#262223; --navy:#2C6B3A; /* retained name; Dispatch uses green, not blue */ --ok-deep:#004D00; --muted:#58595B; --faint:#767676;
+  --solar:#006400; --solar-deep:#004D00; --solar-lite:#4E9E62; --solar-wash:#E9F2EA;
+  --pv:#C96A1C; --pv-deep:#B9601B; /* PVWatts production bars — the only non-green mark */
+  --teal:#3E8E4F; --teal-wash:#EDF4EE;
+  --ok:#006400; --ok-wash:#E9F2EA; --warn:#8A6100; --warn-wash:#FBF0DC;
+  --fail:#B3261E; --fail-wash:#FBE7E5;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --display:'Poppins','IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+a{color:var(--ok);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+a:hover{color:var(--ok-deep);border-bottom-color:var(--ok)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.sec{font-family:var(--display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--rule)}
+.hr{height:1px;background:var(--rule);border:0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:2px 7px 2px 5px;border-radius:2px}
+.c-ok{color:var(--ok);background:var(--ok-wash)}
+.c-warn{color:var(--warn);background:var(--warn-wash)}
+.c-fail{color:var(--fail);background:var(--fail-wash)}
+.c-mute{color:var(--muted);background:var(--panel-2)}
+.c-run{color:var(--solar-deep);background:var(--solar-wash)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink)}
+.unit{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.02em}
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);background:var(--panel);
+  border:1px solid var(--rule-strong);border-radius:3px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn:hover{border-color:var(--ink);background:var(--panel-2)}
+.btn-p{background:var(--ink);color:#FAFAFA;border-color:var(--ink)}
+.btn-d{color:var(--fail);border-color:#E8C6C3}
+.btn[disabled],.btn.is-busy{color:var(--faint);border-color:var(--rule);background:var(--panel-2);cursor:default}
+
+/* Dispatch: display face for headings and the wordmark; generous tracking. */
+h1,h2{font-family:var(--display);letter-spacing:-.005em}
+.wordmark{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.wordmark-2{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:300;color:var(--muted)}

@@ -1,0 +1,278 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --ground:#F7F7F8; --panel:#FFFFFF; --panel-2:#F1F1F1; --sunk:#F5F5F5;
+  --rule:#E2E2E2; --rule-strong:#C2C2C2;
+  --ink:#101010; --ink-2:#262223; --navy:#2C6B3A; /* retained name; Dispatch uses green, not blue */ --ok-deep:#004D00; --muted:#58595B; --faint:#767676;
+  --solar:#006400; --solar-deep:#004D00; --solar-lite:#4E9E62; --solar-wash:#E9F2EA;
+  --pv:#C96A1C; --pv-deep:#B9601B; /* PVWatts production bars — the only non-green mark */
+  --teal:#3E8E4F; --teal-wash:#EDF4EE;
+  --ok:#006400; --ok-wash:#E9F2EA; --warn:#8A6100; --warn-wash:#FBF0DC;
+  --fail:#B3261E; --fail-wash:#FBE7E5;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --display:'Poppins','IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+a{color:var(--ok);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+a:hover{color:var(--ok-deep);border-bottom-color:var(--ok)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.sec{font-family:var(--display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--rule)}
+.hr{height:1px;background:var(--rule);border:0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:2px 7px 2px 5px;border-radius:2px}
+.c-ok{color:var(--ok);background:var(--ok-wash)}
+.c-warn{color:var(--warn);background:var(--warn-wash)}
+.c-fail{color:var(--fail);background:var(--fail-wash)}
+.c-mute{color:var(--muted);background:var(--panel-2)}
+.c-run{color:var(--solar-deep);background:var(--solar-wash)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink)}
+.unit{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.02em}
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);background:var(--panel);
+  border:1px solid var(--rule-strong);border-radius:3px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn:hover{border-color:var(--ink);background:var(--panel-2)}
+.btn-p{background:var(--ink);color:#FAFAFA;border-color:var(--ink)}
+.btn-d{color:var(--fail);border-color:#E8C6C3}
+.btn[disabled],.btn.is-busy{color:var(--faint);border-color:var(--rule);background:var(--panel-2);cursor:default}
+
+/* Dispatch: display face for headings and the wordmark; generous tracking. */
+h1,h2{font-family:var(--display);letter-spacing:-.005em}
+.wordmark{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.wordmark-2{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:300;color:var(--muted)}
+  </style>
+</helmet>
+
+<div style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);overflow:hidden">
+  
+  <header style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--rule-strong);flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" stroke="#006400" stroke-width="1.6"></circle>
+        <g stroke="#006400" stroke-width="1.6" stroke-linecap="round"><path d="M12 2.4v3"></path><path d="M12 18.6v3"></path><path d="M2.4 12h3"></path><path d="M18.6 12h3"></path><path d="M5.2 5.2l2.1 2.1"></path><path d="M16.7 16.7l2.1 2.1"></path><path d="M18.8 5.2l-2.1 2.1"></path><path d="M7.3 16.7l-2.1 2.1"></path></g>
+      </svg>
+      <span class="wordmark" style="font-size:12.5px">Dispatch</span>
+      <span class="wordmark-2" style="font-size:12.5px">Solar Mapping</span>
+    </div>
+    <span class="mono" style="font-size:11px;color:var(--muted)">API 127.0.0.1:8000</span>
+  </header>
+  <div style="display:flex;flex:1;min-height:0">
+    <aside style="width:400px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--rule-strong);display:flex;flex-direction:column;min-height:0">
+      
+  <div style="padding:15px 18px 13px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:baseline;gap:9px">
+        <h1 style="margin:0;font-size:16px;font-weight:600">Sites with results</h1>
+        <span class="num" style="font-size:14px;color:var(--muted)">4</span>
+      </div>
+      <button class="btn" style="padding:5px 8px;border-color:var(--rule)" aria-label="Collapse the site list">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4" stroke="#101010" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11.5 3v8" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+    <p style="margin:8px 0 0;font-size:11.5px;color:var(--muted)">Ordered as imported. These four have coordinates; opening or closing this list re-fits the map so none of them ends up behind it.</p>
+  </div>
+      <div style="flex:1;overflow:hidden">
+        
+  <a href="#" style="display:block;padding:15px 18px 15px 14px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit;border-left:4px solid var(--solar);background:var(--solar-wash)">
+   <div style="display:flex;gap:14px;align-items:center">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:15.5px;font-weight:600;letter-spacing:-.005em">Desert Bloom Solar</span>
+        
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">3737 W Buckeye Rd, Phoenix, AZ 85009</div>
+      <div class="mono" style="font-size:10px;color:var(--faint);margin-top:5px">33.4362, −112.1279</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div><span class="num" style="font-size:17px;letter-spacing:-.01em">179,270</span> <span class="unit" style="font-size:10px">kWh/yr</span></div>
+      <div style="margin-top:4px"><svg width="88" height="22" viewBox="0 0 88 22" aria-hidden="true"><rect x="0" y="11" width="5" height="11" rx="1.6" fill="#C96A1C"></rect><rect x="7.4" y="9" width="5" height="13" rx="1.6" fill="#C96A1C"></rect><rect x="14.8" y="5" width="5" height="17" rx="1.6" fill="#C96A1C"></rect><rect x="22.200000000000003" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="29.6" y="2" width="5" height="20" rx="1.6" fill="#C96A1C"></rect><rect x="37" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="44.400000000000006" y="4" width="5" height="18" rx="1.6" fill="#C96A1C"></rect><rect x="51.800000000000004" y="4" width="5" height="18" rx="1.6" fill="#C96A1C"></rect><rect x="59.2" y="6" width="5" height="16" rx="1.6" fill="#C96A1C"></rect><rect x="66.60000000000001" y="8" width="5" height="14" rx="1.6" fill="#C96A1C"></rect><rect x="74" y="12" width="5" height="10" rx="1.6" fill="#C96A1C"></rect><rect x="81.4" y="13" width="5" height="9" rx="1.6" fill="#C96A1C"></rect></svg></div>
+    </div>
+   </div>
+   
+  <div style="display:flex;align-items:center;gap:14px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(19,58,42,.10)">
+    
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">GHI</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">5.65</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">DNI</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">6.58</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">TILT</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">6.10</span>
+      </span>
+    <span class="unit" style="font-size:9.5px">kWh/m²/day</span>
+  </div>
+  </a>
+        
+  <a href="#" style="display:block;padding:15px 18px 15px 14px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit;border-left:4px solid var(--rule-strong);background:var(--panel-2)">
+   <div style="display:flex;gap:14px;align-items:center">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:15.5px;font-weight:600;letter-spacing:-.005em">Central Valley Array</span>
+        
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">2200 Weedpatch Hwy, Bakersfield, CA 93307</div>
+      <div class="mono" style="font-size:10px;color:var(--faint);margin-top:5px">35.3011, −118.9294 · hovered</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div><span class="num" style="font-size:17px;letter-spacing:-.01em">176,940</span> <span class="unit" style="font-size:10px">kWh/yr</span></div>
+      <div style="margin-top:4px"><svg width="88" height="22" viewBox="0 0 88 22" aria-hidden="true"><rect x="0" y="13" width="5" height="9" rx="1.6" fill="#C96A1C"></rect><rect x="7.4" y="10" width="5" height="12" rx="1.6" fill="#C96A1C"></rect><rect x="14.8" y="6" width="5" height="16" rx="1.6" fill="#C96A1C"></rect><rect x="22.200000000000003" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="29.6" y="2" width="5" height="20" rx="1.6" fill="#C96A1C"></rect><rect x="37" y="2" width="5" height="20" rx="1.6" fill="#C96A1C"></rect><rect x="44.400000000000006" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="51.800000000000004" y="5" width="5" height="17" rx="1.6" fill="#C96A1C"></rect><rect x="59.2" y="7" width="5" height="15" rx="1.6" fill="#C96A1C"></rect><rect x="66.60000000000001" y="10" width="5" height="12" rx="1.6" fill="#C96A1C"></rect><rect x="74" y="14" width="5" height="8" rx="1.6" fill="#C96A1C"></rect><rect x="81.4" y="15" width="5" height="7" rx="1.6" fill="#C96A1C"></rect></svg></div>
+    </div>
+   </div>
+   
+  <div style="display:flex;align-items:center;gap:14px;margin-top:9px;padding-top:9px;border-top:1px solid rgba(19,58,42,.10)">
+    
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">GHI</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">5.82</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">DNI</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">6.94</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><rect x="0" y="4.6" width="3.4" height="7.4" rx="1" fill="#3E8E4F"></rect><rect x="5" y="1.7" width="3.4" height="10.3" rx="1" fill="#3E8E4F"></rect><rect x="10" y="0.0" width="3.4" height="12.0" rx="1" fill="#3E8E4F"></rect></svg>
+        <span class="lbl" style="color:var(--muted)">TILT</span>
+        <span class="num" style="font-size:11.5px;color:#2C6B3A">6.21</span>
+      </span>
+    <span class="unit" style="font-size:9.5px">kWh/m²/day</span>
+  </div>
+  </a>
+        
+  <a href="#" style="display:block;padding:15px 18px 15px 18px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit;border-left:0;background:transparent">
+   <div style="display:flex;gap:14px;align-items:center">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:15.5px;font-weight:600;letter-spacing:-.005em">Front Range PV Yard</span>
+        
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">5050 Pearl Pkwy, Boulder, CO 80301</div>
+      <div class="mono" style="font-size:10px;color:var(--faint);margin-top:5px">40.0210, −105.2510</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div><span class="num" style="font-size:17px;letter-spacing:-.01em">161,880</span> <span class="unit" style="font-size:10px">kWh/yr</span></div>
+      <div style="margin-top:4px"><svg width="88" height="22" viewBox="0 0 88 22" aria-hidden="true"><rect x="0" y="14" width="5" height="8" rx="1.6" fill="#C96A1C"></rect><rect x="7.4" y="11" width="5" height="11" rx="1.6" fill="#C96A1C"></rect><rect x="14.8" y="7" width="5" height="15" rx="1.6" fill="#C96A1C"></rect><rect x="22.200000000000003" y="4" width="5" height="18" rx="1.6" fill="#C96A1C"></rect><rect x="29.6" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="37" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="44.400000000000006" y="4" width="5" height="18" rx="1.6" fill="#C96A1C"></rect><rect x="51.800000000000004" y="6" width="5" height="16" rx="1.6" fill="#C96A1C"></rect><rect x="59.2" y="8" width="5" height="14" rx="1.6" fill="#C96A1C"></rect><rect x="66.60000000000001" y="11" width="5" height="11" rx="1.6" fill="#C96A1C"></rect><rect x="74" y="15" width="5" height="7" rx="1.6" fill="#C96A1C"></rect><rect x="81.4" y="16" width="5" height="6" rx="1.6" fill="#C96A1C"></rect></svg></div>
+    </div>
+   </div>
+   
+  </a>
+        
+  <a href="#" style="display:block;padding:15px 18px 15px 18px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit;border-left:0;background:transparent">
+   <div style="display:flex;gap:14px;align-items:center">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:15.5px;font-weight:600;letter-spacing:-.005em">Hill Country Solar Farm</span>
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><title>One result is missing</title><path d="M8 1.8l6 10.8H2z" fill="none" stroke="#8A6100" stroke-width="1.4" stroke-linejoin="round"></path><path d="M8 6.2v3.2" stroke="#8A6100" stroke-width="1.4" stroke-linecap="round"></path><circle cx="8" cy="11.4" r=".8" fill="#8A6100"></circle></svg>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">4500 E Ben White Blvd, Austin, TX 78741</div>
+      <div class="mono" style="font-size:10px;color:var(--faint);margin-top:5px">30.2219, −97.7180 · solar resource missing</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div><span class="num" style="font-size:17px;letter-spacing:-.01em">168,410</span> <span class="unit" style="font-size:10px">kWh/yr</span></div>
+      <div style="margin-top:4px"><svg width="88" height="22" viewBox="0 0 88 22" aria-hidden="true"><rect x="0" y="12" width="5" height="10" rx="1.6" fill="#C96A1C"></rect><rect x="7.4" y="10" width="5" height="12" rx="1.6" fill="#C96A1C"></rect><rect x="14.8" y="6" width="5" height="16" rx="1.6" fill="#C96A1C"></rect><rect x="22.200000000000003" y="4" width="5" height="18" rx="1.6" fill="#C96A1C"></rect><rect x="29.6" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="37" y="3" width="5" height="19" rx="1.6" fill="#C96A1C"></rect><rect x="44.400000000000006" y="5" width="5" height="17" rx="1.6" fill="#C96A1C"></rect><rect x="51.800000000000004" y="6" width="5" height="16" rx="1.6" fill="#C96A1C"></rect><rect x="59.2" y="8" width="5" height="14" rx="1.6" fill="#C96A1C"></rect><rect x="66.60000000000001" y="10" width="5" height="12" rx="1.6" fill="#C96A1C"></rect><rect x="74" y="13" width="5" height="9" rx="1.6" fill="#C96A1C"></rect><rect x="81.4" y="14" width="5" height="8" rx="1.6" fill="#C96A1C"></rect></svg></div>
+    </div>
+   </div>
+   
+  </a>
+        
+  <div style="display:flex;gap:14px;align-items:center;padding:15px 18px;border-bottom:1px solid var(--rule);opacity:.62">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15.5px;font-weight:600;color:var(--muted)">Piedmont Solar Center</div>
+      <div style="font-size:12px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">3300 Rock Quarry Rd, Raleigh, NC 27610</div>
+      <div style="display:flex;align-items:center;gap:7px;margin-top:7px">
+        <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.4" stroke="#E2E2E2" stroke-width="1.5" fill="none"></circle><path d="M6 1.6A4.4 4.4 0 0 1 10.4 6" stroke="#006400" stroke-width="1.7" stroke-linecap="round" fill="none"></path></svg>
+        <span class="mono" style="font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Processing</span>
+      </div>
+    </div>
+    <div style="width:88px;flex-shrink:0">
+      <div style="height:3px;background:var(--rule);border-radius:2px;overflow:hidden"><div style="width:45%;height:100%;background:var(--solar-lite)"></div></div>
+    </div>
+  </div>
+      </div>
+      
+  <div style="border-top:1px solid var(--rule-strong);background:var(--panel-2)">
+    <button style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;background:none;border:0;cursor:pointer;text-align:left;font-family:var(--sans)">
+      <span style="display:flex;align-items:center;gap:9px">
+        <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M4 2.5l4.5 4.5L4 11.5" stroke="#58595B" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--ink)">Not on the map</span>
+        <span class="num" style="font-size:12px;color:var(--muted)">3</span>
+      </span>
+      <span class="mono" style="font-size:10px;color:var(--faint)">1 pending · 1 no match · 1 failed</span>
+    </button>
+  </div>
+    </aside>
+    <section style="flex:1;position:relative;background:#F1F1F1;min-width:0">
+      
+  <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-label="Map of the United States with four resolved solar sites">
+    <defs><clipPath id="us"><path d="M70,70 L520,55 L560,70 L600,96 L640,80 L690,120 L760,130 L830,150 L862,108 L845,176 L810,210 L790,242 L800,300 L770,350 L762,400 L792,432 L800,500 L768,470 L748,410 L700,420 L650,430 L600,442 L560,470 L520,500 L470,470 L420,455 L380,430 L300,430 L250,455 L180,470 L150,420 L120,360 L100,300 L80,230 L60,150 Z"></path></clipPath></defs>
+    <rect width="1000" height="620" fill="#F1F1F1"></rect>
+    <g stroke="#E2E2E2" stroke-width="1"><path d="M0 100H1000M0 200H1000M0 300H1000M0 400H1000M0 500H1000M100 0V620M250 0V620M400 0V620M550 0V620M700 0V620M850 0V620"></path></g>
+    <g clip-path="url(#us)">
+      <rect width="1000" height="620" fill="#FAFAFA"></rect>
+      <g stroke="#E2E2E2" stroke-width="1.1"><path d="M170 60V470M250 55V455M330 55V430M410 55V450M490 55V500M570 60V470M650 78V430M730 125V420M810 145V300M0 150H900M0 230H900M0 300H900M0 370H900M0 440H900"></path></g>
+    </g>
+    <path d="M70,70 L520,55 L560,70 L600,96 L640,80 L690,120 L760,130 L830,150 L862,108 L845,176 L810,210 L790,242 L800,300 L770,350 L762,400 L792,432 L800,500 L768,470 L748,410 L700,420 L650,430 L600,442 L560,470 L520,500 L470,470 L420,455 L380,430 L300,430 L250,455 L180,470 L150,420 L120,360 L100,300 L80,230 L60,150 Z" fill="none" stroke="#C2C2C2" stroke-width="1.6" stroke-linejoin="round"></path>
+    <g>
+      <circle cx="145" cy="330" r="13" fill="#006400" opacity=".14"></circle><circle cx="145" cy="330" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="360" cy="268" r="13" fill="#006400" opacity=".14"></circle><circle cx="360" cy="268" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="520" cy="452" r="13" fill="#006400" opacity=".14"></circle><circle cx="520" cy="452" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="278" cy="382" r="20" fill="#006400" opacity=".16"></circle><circle cx="278" cy="382" r="8" fill="#004D00" stroke="#FFFFFF" stroke-width="2.5"></circle>
+    </g>
+  </svg>
+  <div style="position:absolute;left:calc(27.8% - 10px);top:calc(61.6% + 14px);width:250px;background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;box-shadow:0 6px 18px rgba(28,58,52,.10);padding:11px 12px">
+    <div style="font-size:13px;font-weight:600">Desert Bloom Solar</div>
+    <div class="mono" style="font-size:10.5px;color:var(--muted);margin-top:3px">3737 West Buckeye Road, Phoenix, Maricopa County, Arizona, 85009</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule)">
+      <div><div class="lbl">Annual AC</div><div><span class="num" style="font-size:15px">179,270</span> <span class="unit">kWh</span></div></div>
+      <span style="font-size:12px;color:var(--navy);font-weight:500">Open detail →</span>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule)">
+      <span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">GHI</span><span class="num" style="font-size:11.5px;color:#2C6B3A">5.65</span></span><span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">DNI</span><span class="num" style="font-size:11.5px;color:#2C6B3A">6.58</span></span><span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">TILT</span><span class="num" style="font-size:11.5px;color:#2C6B3A">6.10</span></span>
+      <span class="unit" style="font-size:9.5px">kWh/m²/day</span>
+    </div>
+  </div>
+  <div style="position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    <div style="display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;overflow:hidden">
+      <button class="btn" style="border:0;border-radius:0;padding:7px 9px;background:var(--panel)" aria-label="Zoom in">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+      <div style="height:1px;background:var(--rule)"></div>
+      <button class="btn" style="border:0;border-radius:0;padding:7px 9px;background:var(--panel)" aria-label="Zoom out">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7h9" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+    <button class="btn" style="padding:6px 10px;font-size:11.5px;background:var(--panel)">
+      <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5V2.6h2.4M12 5V2.6H9.6M2 9v2.4h2.4M12 9v2.4H9.6" stroke="#101010" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="7" cy="7" r="1.6" fill="#006400"></circle></svg>
+      Fit to sites
+    </button>
+  </div>
+  <div class="mono" style="position:absolute;left:16px;bottom:12px;font-size:10px;color:var(--muted);background:rgba(255,253,248,.92);border:1px solid var(--rule);border-radius:2px;padding:4px 8px">Drag to pan · scroll to zoom · the list never covers the map</div>
+  <div style="position:absolute;right:12px;bottom:10px;text-align:right;line-height:1.5">
+    <div class="mono" style="font-size:10px;color:var(--muted);background:rgba(255,253,248,.9);padding:2px 6px;border-radius:2px;display:inline-block">Map data © OpenStreetMap contributors</div>
+    <div class="mono" style="font-size:10px;color:var(--muted);background:rgba(255,253,248,.9);padding:2px 6px;border-radius:2px;display:inline-block;margin-top:3px">Geocoding © OpenStreetMap / Nominatim</div>
+  </div>
+    </section>
+  </div>
+</div></x-dc>
+</body>
+</html>

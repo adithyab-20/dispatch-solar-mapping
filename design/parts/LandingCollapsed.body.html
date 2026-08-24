@@ -1,0 +1,85 @@
+
+<div style="width:1440px;height:900px;display:flex;flex-direction:column;background:var(--ground);overflow:hidden">
+  
+  <header style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--rule-strong);flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" stroke="#006400" stroke-width="1.6"></circle>
+        <g stroke="#006400" stroke-width="1.6" stroke-linecap="round"><path d="M12 2.4v3"></path><path d="M12 18.6v3"></path><path d="M2.4 12h3"></path><path d="M18.6 12h3"></path><path d="M5.2 5.2l2.1 2.1"></path><path d="M16.7 16.7l2.1 2.1"></path><path d="M18.8 5.2l-2.1 2.1"></path><path d="M7.3 16.7l-2.1 2.1"></path></g>
+      </svg>
+      <span class="wordmark" style="font-size:12.5px">Dispatch</span>
+      <span class="wordmark-2" style="font-size:12.5px">Solar Mapping</span>
+    </div>
+    <span class="mono" style="font-size:11px;color:var(--muted)">API 127.0.0.1:8000</span>
+  </header>
+  <div style="display:flex;flex:1;min-height:0">
+    <aside style="width:56px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--rule-strong);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:16px">
+      <button class="btn" style="padding:5px 7px;border-color:var(--rule)" aria-label="Show the site list">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 3l4 4-4 4" stroke="#101010" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.5 3v8" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+      <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)">Sites&nbsp;&nbsp;7</div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:2px">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="#004D00" ></circle></svg><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="#006400" ></circle></svg><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="#006400" ></circle></svg><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="#006400" ></circle></svg>
+        <div style="width:16px;height:1px;background:var(--rule-strong)"></div>
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#58595B" stroke-width="1.3"></circle></svg><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#58595B" stroke-width="1.3"></circle></svg><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#B3261E" stroke-width="1.3"></circle></svg>
+      </div>
+    </aside>
+    <section style="flex:1;position:relative;background:#F1F1F1;min-width:0">
+      
+  <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-label="Map of the United States with four resolved solar sites">
+    <defs><clipPath id="us"><path d="M70,70 L520,55 L560,70 L600,96 L640,80 L690,120 L760,130 L830,150 L862,108 L845,176 L810,210 L790,242 L800,300 L770,350 L762,400 L792,432 L800,500 L768,470 L748,410 L700,420 L650,430 L600,442 L560,470 L520,500 L470,470 L420,455 L380,430 L300,430 L250,455 L180,470 L150,420 L120,360 L100,300 L80,230 L60,150 Z"></path></clipPath></defs>
+    <rect width="1000" height="620" fill="#F1F1F1"></rect>
+    <g stroke="#E2E2E2" stroke-width="1"><path d="M0 100H1000M0 200H1000M0 300H1000M0 400H1000M0 500H1000M100 0V620M250 0V620M400 0V620M550 0V620M700 0V620M850 0V620"></path></g>
+    <g clip-path="url(#us)">
+      <rect width="1000" height="620" fill="#FAFAFA"></rect>
+      <g stroke="#E2E2E2" stroke-width="1.1"><path d="M170 60V470M250 55V455M330 55V430M410 55V450M490 55V500M570 60V470M650 78V430M730 125V420M810 145V300M0 150H900M0 230H900M0 300H900M0 370H900M0 440H900"></path></g>
+    </g>
+    <path d="M70,70 L520,55 L560,70 L600,96 L640,80 L690,120 L760,130 L830,150 L862,108 L845,176 L810,210 L790,242 L800,300 L770,350 L762,400 L792,432 L800,500 L768,470 L748,410 L700,420 L650,430 L600,442 L560,470 L520,500 L470,470 L420,455 L380,430 L300,430 L250,455 L180,470 L150,420 L120,360 L100,300 L80,230 L60,150 Z" fill="none" stroke="#C2C2C2" stroke-width="1.6" stroke-linejoin="round"></path>
+    <g>
+      <circle cx="145" cy="330" r="13" fill="#006400" opacity=".14"></circle><circle cx="145" cy="330" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="360" cy="268" r="13" fill="#006400" opacity=".14"></circle><circle cx="360" cy="268" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="520" cy="452" r="13" fill="#006400" opacity=".14"></circle><circle cx="520" cy="452" r="5.5" fill="#006400" stroke="#FFFFFF" stroke-width="2"></circle>
+      <circle cx="278" cy="382" r="20" fill="#006400" opacity=".16"></circle><circle cx="278" cy="382" r="8" fill="#004D00" stroke="#FFFFFF" stroke-width="2.5"></circle>
+    </g>
+  </svg>
+      <div style="position:absolute;left:16px;top:16px;background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:9px 11px">
+        <div class="lbl" style="margin-bottom:5px">Map shows</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:11.5px"><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="#006400" stroke="#FFFFFF" stroke-width="1.5"></circle></svg>4 sites with coordinates</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">3 more are listed but unmapped</div>
+      </div>
+      
+  <div style="position:absolute;left:calc(27.8% - 10px);top:calc(61.6% + 14px);width:250px;background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;box-shadow:0 6px 18px rgba(28,58,52,.10);padding:11px 12px">
+    <div style="font-size:13px;font-weight:600">Desert Bloom Solar</div>
+    <div class="mono" style="font-size:10.5px;color:var(--muted);margin-top:3px">3737 West Buckeye Road, Phoenix, Maricopa County, Arizona, 85009</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule)">
+      <div><div class="lbl">Annual AC</div><div><span class="num" style="font-size:15px">179,270</span> <span class="unit">kWh</span></div></div>
+      <span style="font-size:12px;color:var(--navy);font-weight:500">Open detail →</span>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule)">
+      <span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">GHI</span><span class="num" style="font-size:11.5px;color:#2C6B3A">5.65</span></span><span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">DNI</span><span class="num" style="font-size:11.5px;color:#2C6B3A">6.58</span></span><span style="display:flex;align-items:baseline;gap:4px"><span class="lbl">TILT</span><span class="num" style="font-size:11.5px;color:#2C6B3A">6.10</span></span>
+      <span class="unit" style="font-size:9.5px">kWh/m²/day</span>
+    </div>
+  </div>
+  <div style="position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    <div style="display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;overflow:hidden">
+      <button class="btn" style="border:0;border-radius:0;padding:7px 9px;background:var(--panel)" aria-label="Zoom in">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+      <div style="height:1px;background:var(--rule)"></div>
+      <button class="btn" style="border:0;border-radius:0;padding:7px 9px;background:var(--panel)" aria-label="Zoom out">
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7h9" stroke="#101010" stroke-width="1.5" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+    <button class="btn" style="padding:6px 10px;font-size:11.5px;background:var(--panel)">
+      <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5V2.6h2.4M12 5V2.6H9.6M2 9v2.4h2.4M12 9v2.4H9.6" stroke="#101010" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="7" cy="7" r="1.6" fill="#006400"></circle></svg>
+      Fit to sites
+    </button>
+  </div>
+  <div class="mono" style="position:absolute;left:16px;bottom:12px;font-size:10px;color:var(--muted);background:rgba(255,253,248,.92);border:1px solid var(--rule);border-radius:2px;padding:4px 8px">Drag to pan · scroll to zoom · the list never covers the map</div>
+  <div style="position:absolute;right:12px;bottom:10px;text-align:right;line-height:1.5">
+    <div class="mono" style="font-size:10px;color:var(--muted);background:rgba(255,253,248,.9);padding:2px 6px;border-radius:2px;display:inline-block">Map data © OpenStreetMap contributors</div>
+    <div class="mono" style="font-size:10px;color:var(--muted);background:rgba(255,253,248,.9);padding:2px 6px;border-radius:2px;display:inline-block;margin-top:3px">Geocoding © OpenStreetMap / Nominatim</div>
+  </div>
+    </section>
+  </div>
+</div>
