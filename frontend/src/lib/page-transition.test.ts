@@ -32,10 +32,10 @@ describe("startPageTransition", () => {
     expect(readyThen).toHaveBeenCalledOnce();
     expect(updateDoneThen).toHaveBeenCalledOnce();
     expect(finishedThen).toHaveBeenCalledOnce();
-    expect(document.documentElement).toHaveAttribute("data-page-transition", "forward");
+    expect(document.documentElement.getAttribute("data-page-transition")).toBe("forward");
 
     const finishOnRejected = finishedThen.mock.calls[0]?.[1] as (() => void) | undefined;
     finishOnRejected?.();
-    expect(document.documentElement).not.toHaveAttribute("data-page-transition");
+    expect(document.documentElement.hasAttribute("data-page-transition")).toBe(false);
   });
 });

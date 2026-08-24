@@ -1,14 +1,12 @@
 import { TransitionLink } from "@/components/TransitionLink";
 import type { ProcessingStatus, SiteDetail } from "@/lib/api/types";
 import {
-  fmt,
   formatAssumptions,
-  formatCoordinates,
-  formatTimestamp,
   geocodeChip,
   monthLabel,
   orderMonthly,
 } from "@/lib/detail";
+import { fmt, formatCoordinates, formatTimestamp } from "@/lib/format";
 import { MiniChart } from "@/components/detail/MiniChart";
 import { MonthlyChart } from "@/components/detail/MonthlyChart";
 import { MonthTable, type MonthTableRow } from "@/components/detail/MonthTable";
@@ -29,16 +27,14 @@ function SectionTitle({ title, note, color }: { title: string; note?: string; co
   );
 }
 
-/** Header: identity plus the two approved site-level actions. */
+/** Header: identity plus the site editing action. */
 export function DetailHeader({
   site,
   onEdit,
-  onRefreshGeocoding,
   disabled,
 }: {
   site: SiteDetail;
   onEdit: () => void;
-  onRefreshGeocoding: () => void;
   disabled: boolean;
 }) {
   return (
@@ -54,14 +50,9 @@ export function DetailHeader({
             Site #{site.id} · active
           </div>
         </div>
-        <div className="detail-header-actions">
-          <button className="btn" type="button" onClick={onEdit} disabled={disabled}>
-            Edit name or address
-          </button>
-          <button className="btn btn-danger" type="button" onClick={onRefreshGeocoding} disabled={disabled}>
-            Refresh geocoding…
-          </button>
-        </div>
+        <button className="btn" type="button" onClick={onEdit} disabled={disabled}>
+          Edit name or address
+        </button>
       </div>
     </div>
   );

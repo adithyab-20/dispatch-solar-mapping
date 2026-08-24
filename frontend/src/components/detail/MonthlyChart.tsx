@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { barPath } from "@/components/detail/bar";
-import { fmt } from "@/lib/detail";
+import { fmt } from "@/lib/format";
 
 const WIDTH = 1240;
 const HEIGHT = 208;

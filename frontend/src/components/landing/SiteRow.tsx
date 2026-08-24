@@ -1,7 +1,7 @@
 import { StatusIndicator } from "@/components/StatusIndicator";
 import { TransitionLink } from "@/components/TransitionLink";
 import type { SiteListItem } from "@/lib/api/types";
-import { fmt } from "@/lib/detail";
+import { fmt } from "@/lib/format";
 import { hasCoordinates, isMappable, missingResultNote, monthlyAcSeries } from "@/lib/sites";
 
 function formatCoords(lat: number, lon: number): string {
@@ -44,33 +44,27 @@ function IrradianceLine({ site }: { site: SiteListItem }) {
   ];
   if (entries.every(([, v]) => v === null)) return null;
   return (
-    <div
-      className="row-irr"
-      style={{
-        alignItems: "center",
-        gap: 14,
-        marginTop: 9,
-        paddingTop: 9,
-        borderTop: "1px solid rgba(19,58,42,.10)",
-        flexWrap: "wrap",
-      }}
-    >
-      {entries.map(([label, value]) =>
-        value === null ? null : (
-          <span key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <IrrGlyph />
-            <span className="lbl" style={{ color: "var(--muted)" }}>
-              {label}
-            </span>
-            <span className="num" style={{ fontSize: 11.5, color: "var(--teal-deep)" }}>
-              {fmt(value, 2)}
-            </span>
+    <div className="row-irr-reveal">
+      <div className="row-irr-clip">
+        <div className="row-irr">
+          {entries.map(([label, value]) =>
+            value === null ? null : (
+              <span key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <IrrGlyph />
+                <span className="lbl" style={{ color: "var(--muted)" }}>
+                  {label}
+                </span>
+                <span className="num" style={{ fontSize: 11.5, color: "var(--teal-deep)" }}>
+                  {fmt(value, 2)}
+                </span>
+              </span>
+            ),
+          )}
+          <span className="unit" style={{ fontSize: 9.5 }}>
+            kWh/m²/day
           </span>
-        ),
-      )}
-      <span className="unit" style={{ fontSize: 9.5 }}>
-        kWh/m²/day
-      </span>
+        </div>
+      </div>
     </div>
   );
 }

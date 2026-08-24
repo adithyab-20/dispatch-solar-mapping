@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 
 import type { SiteDetail } from "@/lib/api/types";
 import {
-  formatTimestamp,
   geocodeChip,
   processingChip,
   shouldAutoOpenStages,
   type ChipMeta,
 } from "@/lib/detail";
+import { formatTimestamp } from "@/lib/format";
 import { StatusChip } from "@/components/detail/StatusChip";
 
 interface StageModel {

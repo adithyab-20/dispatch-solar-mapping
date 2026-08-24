@@ -1,4 +1,5 @@
-import { fmt, monthLabel, MONTH_ORDER } from "@/lib/detail";
+import { monthLabel, MONTH_ORDER } from "@/lib/detail";
+import { fmt } from "@/lib/format";
 
 export interface MonthTableRow {
   label: string;

@@ -187,7 +187,6 @@ function renderBody(view: View, siteId: number | null, retry: () => void, action
       <DetailHeader
         site={site}
         onEdit={actions.onEdit}
-        onRefreshGeocoding={actions.onRefreshGeocoding}
         disabled={actions.busy !== null}
       />
       <div className="detail-main">

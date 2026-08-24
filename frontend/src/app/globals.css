@@ -238,6 +238,29 @@ button:focus-visible {
 .catalog-rail {
   width: 400px;
   flex-shrink: 0;
+  position: relative;
+  min-height: 0;
+  border-right: 1px solid var(--rule-strong);
+  transition:
+    width 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms ease,
+    border-width 180ms ease;
+}
+
+.catalog-rail-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.catalog-rail-content {
+  width: 400px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--panel);
 }
 
 .map-panel {
@@ -254,6 +277,12 @@ button:focus-visible {
   .catalog-rail {
     width: 100%;
     max-height: 50vh;
+    transition:
+      max-height 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 180ms ease;
+  }
+  .catalog-rail-content {
+    width: 100%;
   }
   .map-panel {
     min-height: 360px;
@@ -271,62 +300,91 @@ button:focus-visible {
    never colour alone. */
 .site-row {
   display: block;
-  padding: 15px 18px;
+  padding: 15px 18px 15px 14px;
   border-bottom: 1px solid var(--rule);
-  border-left: 0 solid transparent;
+  border-left: 4px solid transparent;
   color: inherit;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
 }
 
 .site-row:hover,
 .site-row:focus-visible {
-  border-left-width: 4px;
   border-left-color: var(--rule-strong);
-  padding-left: 14px;
   background: var(--panel-2);
 }
 
 .site-row.is-highlighted {
-  border-left-width: 4px;
   border-left-color: var(--solar);
-  padding-left: 14px;
   background: var(--solar-wash);
+}
+
+.site-row .row-irr-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 140ms ease,
+    visibility 0s linear 220ms;
+}
+
+.site-row:hover .row-irr-reveal,
+.site-row:focus-visible .row-irr-reveal,
+.site-row.is-highlighted .row-irr-reveal {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.site-row .row-irr-clip {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .site-row .row-irr {
-  display: none;
-}
-
-.site-row:hover .row-irr,
-.site-row:focus-visible .row-irr {
   display: flex;
-}
-
-.site-row.is-highlighted .row-irr {
-  display: flex;
-}
-
-/* Collapsed rail: a 56px spine with the count and a status-dot summary. */
-.catalog-rail.is-collapsed {
-  width: 56px;
-}
-
-.spine-site {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: inherit;
-  background: transparent;
-  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid rgb(19 58 42 / 10%);
 }
 
-.spine-site:hover,
-.spine-site:focus-visible {
-  background: var(--solar-wash);
+/* The closed rail has no footprint. Only its expand control remains over the map. */
+.catalog-rail.is-collapsed {
+  width: 0;
+  overflow: visible;
+  border-right-color: transparent;
+  border-right-width: 0;
+}
+
+.rail-expand-control {
+  position: absolute;
+  z-index: 600;
+  top: 14px;
+  left: 54px;
+  box-shadow: 0 1px 3px rgb(16 16 16 / 10%);
+}
+
+.rail-toggle-control {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
+  border-color: var(--rule);
+}
+
+@media (max-width: 1100px) {
+  .catalog-rail.is-collapsed {
+    width: 100%;
+    max-height: 0;
+  }
 }
 
 /* Site detail page: a single vertical stack that scrolls under the app bar. */
@@ -617,48 +675,24 @@ button:focus-visible {
   }
 }
 
-@keyframes page-forward-out {
+@keyframes page-fade-out {
   to {
-    opacity: 0.72;
-    transform: translateX(-3%);
+    opacity: 0.82;
   }
 }
 
-@keyframes page-forward-in {
+@keyframes page-fade-in {
   from {
-    opacity: 0.72;
-    transform: translateX(3%);
+    opacity: 0.82;
   }
 }
 
-@keyframes page-back-out {
-  to {
-    opacity: 0.72;
-    transform: translateX(3%);
-  }
+html[data-page-transition]::view-transition-old(root) {
+  animation: 120ms ease-out both page-fade-out;
 }
 
-@keyframes page-back-in {
-  from {
-    opacity: 0.72;
-    transform: translateX(-3%);
-  }
-}
-
-html[data-page-transition="forward"]::view-transition-old(root) {
-  animation: 220ms ease-in both page-forward-out;
-}
-
-html[data-page-transition="forward"]::view-transition-new(root) {
-  animation: 260ms ease-out both page-forward-in;
-}
-
-html[data-page-transition="back"]::view-transition-old(root) {
-  animation: 220ms ease-in both page-back-out;
-}
-
-html[data-page-transition="back"]::view-transition-new(root) {
-  animation: 260ms ease-out both page-back-in;
+html[data-page-transition]::view-transition-new(root) {
+  animation: 180ms ease-out both page-fade-in;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -666,11 +700,4 @@ html[data-page-transition="back"]::view-transition-new(root) {
     animation: none !important;
     transition: none !important;
   }
-}
-
-.detail-header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
 }
