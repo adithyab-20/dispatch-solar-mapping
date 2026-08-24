@@ -7,31 +7,21 @@ import pytest
 import requests
 from django.core.management import call_command
 from django.db import connection
+from pytest_django.fixtures import Settings
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
-from sites.services.geocoding import NOMINATIM_GATEWAY, NominatimGateway
+from sites.services.geocoding import NOMINATIM_GATEWAY, NominatimGateway, geocode_site
 
-
-@pytest.fixture(autouse=True)
-def reset_shared_gateway_rate_gate(monkeypatch: pytest.MonkeyPatch) -> None:
-    current_time = [0.0]
-
-    def sleep(seconds: float) -> None:
-        current_time[0] += seconds
-
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_monotonic", lambda: current_time[0])
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_sleep", sleep)
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_last_request_started_at", None)
+pytestmark = pytest.mark.usefixtures("isolated_nominatim_gateway")
 
 
 @pytest.mark.django_db(transaction=True)
-@pytest.mark.usefixtures("settings")
 def test_import_resolves_a_new_site_after_reconciliation_commits(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    settings: object,
+    settings: Settings,
 ) -> None:
-    settings.CONTACT_EMAIL = "solar@example.com"  # type: ignore[attr-defined]
+    settings.CONTACT_EMAIL = "solar@example.com"
     reactivated = Site.objects.create(
         name="Stored Array",
         address="1 Existing Way",
@@ -228,13 +218,12 @@ def test_import_persists_non_success_http_status_without_provider_body(
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("settings")
 def test_import_persists_invalid_gateway_configuration_without_requesting(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    settings: object,
+    settings: Settings,
 ) -> None:
-    settings.CONTACT_EMAIL = 42  # type: ignore[attr-defined]
+    settings.CONTACT_EMAIL = 42
     import_path = tmp_path / "sites.json"
     import_path.write_text(
         json.dumps([{"name": "Configured Solar", "address": "4 Config Way"}])
@@ -271,6 +260,10 @@ def test_import_persists_invalid_gateway_configuration_without_requesting(
         pytest.param(
             json.dumps([{"lat": "nan", "lon": "-87.0", "display_name": "Chicago"}]),
             id="non-finite-coordinate",
+        ),
+        pytest.param(
+            json.dumps([{"lat": 10**400, "lon": "-87.0", "display_name": "Chicago"}]),
+            id="overflowing-coordinate",
         ),
         pytest.param(
             json.dumps([{"lat": "90.1", "lon": "-87.0", "display_name": "Chicago"}]),
@@ -537,12 +530,33 @@ def test_unexpected_error_propagates_and_leaves_unfinished_sites_pending(
         "2 Crash Way",
     ]
 
+    http_get.side_effect = None
+    http_get.return_value = Mock(
+        status_code=200,
+        text=json.dumps(
+            [
+                {
+                    "lat": "39.5",
+                    "lon": "-76.5",
+                    "display_name": "2 Crash Way, Maryland",
+                }
+            ]
+        ),
+    )
+    geocode_site(interrupted)
 
-@pytest.mark.usefixtures("settings")
+    interrupted.refresh_from_db()
+    assert interrupted.geocode_status == GeocodeStatus.RESOLVED
+    assert interrupted.geocode_attempted_at is not None
+    assert interrupted.latitude == 39.5
+    assert interrupted.longitude == -76.5
+    assert interrupted.resolved_address == "2 Crash Way, Maryland"
+
+
 def test_gateway_spaces_request_starts_by_at_least_1_1_seconds(
-    settings: object,
+    settings: Settings,
 ) -> None:
-    settings.CONTACT_EMAIL = ""  # type: ignore[attr-defined]
+    settings.CONTACT_EMAIL = ""
     current_time = [100.0]
     sleeps: list[float] = []
     request_starts: list[float] = []
@@ -574,12 +588,11 @@ def test_gateway_spaces_request_starts_by_at_least_1_1_seconds(
     assert sleeps == pytest.approx([0.85])
 
 
-@pytest.mark.usefixtures("settings")
 def test_gateway_uses_a_descriptive_user_agent_and_warns_without_contact_email(
-    settings: object,
+    settings: Settings,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    settings.CONTACT_EMAIL = ""  # type: ignore[attr-defined]
+    settings.CONTACT_EMAIL = ""
     session = Mock(spec=requests.Session)
     session.get.return_value = Mock(status_code=200, text="[]")
     gateway = NominatimGateway(session)
@@ -592,11 +605,10 @@ def test_gateway_uses_a_descriptive_user_agent_and_warns_without_contact_email(
     assert "CONTACT_EMAIL is not configured" in caplog.text
 
 
-@pytest.mark.usefixtures("settings")
 def test_gateway_serializes_the_rate_gate_and_http_request(
-    settings: object,
+    settings: Settings,
 ) -> None:
-    settings.CONTACT_EMAIL = "solar@example.com"  # type: ignore[attr-defined]
+    settings.CONTACT_EMAIL = "solar@example.com"
     first_http_started = threading.Event()
     release_first_http = threading.Event()
     second_search_started = threading.Event()

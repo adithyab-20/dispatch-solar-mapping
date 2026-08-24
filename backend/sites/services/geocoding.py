@@ -22,7 +22,7 @@ NOMINATIM_MINIMUM_INTERVAL_SECONDS = 1.1
 
 @dataclass(frozen=True)
 class GeocodingOutcome:
-    status: str
+    status: GeocodeStatus
     attempted_at: datetime
     latitude: float | None = None
     longitude: float | None = None
@@ -168,7 +168,7 @@ def _parse_coordinate(value: object, *, minimum: float, maximum: float) -> float
         raise UnexpectedGeocodingResponse
     try:
         coordinate = float(value)
-    except ValueError as error:
+    except (OverflowError, ValueError) as error:
         raise UnexpectedGeocodingResponse from error
     if not math.isfinite(coordinate) or not minimum <= coordinate <= maximum:
         raise UnexpectedGeocodingResponse

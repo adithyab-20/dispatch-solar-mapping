@@ -9,26 +9,21 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
-from sites.services.geocoding import NOMINATIM_GATEWAY
+from sites.services.geocoding import NominatimGateway
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 @pytest.fixture(autouse=True)
-def nominatim_http_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
-    current_time = [0.0]
-
-    def sleep(seconds: float) -> None:
-        current_time[0] += seconds
-
+def nominatim_http_boundary(
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_nominatim_gateway: NominatimGateway,
+) -> None:
     monkeypatch.setattr(
-        NOMINATIM_GATEWAY.session,
+        isolated_nominatim_gateway.session,
         "get",
         Mock(return_value=Mock(status_code=200, text="[]")),
     )
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_monotonic", lambda: current_time[0])
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_sleep", sleep)
-    monkeypatch.setattr(NOMINATIM_GATEWAY, "_last_request_started_at", None)
 
 
 @pytest.mark.django_db
