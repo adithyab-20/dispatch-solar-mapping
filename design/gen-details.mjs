@@ -165,7 +165,7 @@ const pvwattsSection = (hoverIdx = 5) => `
     <div style="display:flex;margin:2px 0 18px;padding:2px 0">
       <div style="flex:1;padding-right:18px">
         <div class="lbl">Annual AC production</div>
-        <div style="margin-top:5px"><span class="num" style="font-size:34px;letter-spacing:-.02em;color:var(--solar-deep)">${fmt(ANNUAL_AC)}</span> <span class="unit" style="font-size:12px">kWh / year</span></div>
+        <div style="margin-top:5px"><span class="num" style="font-size:34px;letter-spacing:-.02em;color:var(--pv-deep)">${fmt(ANNUAL_AC)}</span> <span class="unit" style="font-size:12px">kWh / year</span></div>
       </div>
       ${stat('Capacity factor', (ANNUAL_AC / (100 * 8760) * 100).toFixed(1), '%')}
       ${stat('Annual solar radiation', mean(RAD).toFixed(2), 'kWh / m² / day')}

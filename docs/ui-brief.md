@@ -48,9 +48,11 @@ their greys for rules and secondary text, and a single accent — Dispatch green
 `#006400` — for eyebrow labels, links, the success state, map markers,
 selection, and progress. The irradiance data marks use a lighter step of that
 green (`#3E8E4F`), and the collapsed-rail progress bar a lighter `#4E9E62`;
-both stay in the green family. Exactly one thing breaks the green: the
-**PVWatts production bars**, the estimate the app exists to produce, are solar
-orange `#C96A1C`. A status color never carries a data
+both stay in the green family. Exactly one thing breaks the green — the
+**PVWatts production output**, the estimate the app exists to produce. Its
+monthly production bars are solar orange `#C96A1C`, and its headline annual
+figure is the deep step of that same orange (`#B9601B`). Orange is therefore the
+PVWatts signature and appears nowhere else. A status color never carries a data
 series, and the data-mark orange never signals a status. Headings and section
 labels are Poppins tracked wide; cards are flat with 2–3px radii and hairline
 rules, never shadows.
@@ -85,7 +87,8 @@ Measured against the ground `#F7F7F8`.
 | Dispatch green | `#006400` | Links, labels, success, markers | 7.0:1 |
 | solar, deep | `#004D00` | Green text / hover / column-hover | 9.5:1 |
 | green, light | `#3E8E4F` | Irradiance data marks | 3.8:1 (graphical) |
-| solar orange | `#C96A1C` | PVWatts production bars only | 3.5:1 (graphical) |
+| solar orange | `#C96A1C` | PVWatts production bars | 3.5:1 (graphical) |
+| solar orange, deep | `#B9601B` | PVWatts headline annual figure (large text only) | 4.4:1 on panel |
 | status: caution | `#8A6100` | Caution / partial | 5.2:1 |
 | status: failed | `#B3261E` | Failure | 6.1:1 |
 
@@ -199,7 +202,8 @@ Vertical stack, identity first:
    cards (Geocoding · Solar resource · PVWatts), each with its status chip,
    `Last attempted`/`Never attempted` timestamp, a plain-language line, and its
    focused control.
-4. **PVWatts v8 estimate** — the hero. Annual AC production (34px, solar-deep)
+4. **PVWatts v8 estimate** — the hero. Annual AC production (34px, in the deep
+   bar-orange `#B9601B`, tying the headline to its production bars)
    plus capacity factor, annual solar radiation, and best month; then the
    monthly production chart and its backing table.
 5. **Solar resource** — annual GHI, DNI, and latitude-tilt averages, each with

@@ -100,7 +100,7 @@ const detail = phone('Detail, top · 390 × 844',
   </button>
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
     <div class="sec">PVWatts v8 estimate</div>
-    <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--solar-deep);letter-spacing:-.02em">179,270</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
+    <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">179,270</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">20.5</span> <span class="unit">%</span></div></div>
       <div><div class="lbl">Annual radiation</div><div style="margin-top:3px"><span class="num" style="font-size:16px">6.05</span> <span class="unit">kWh/m²/day</span></div></div>
@@ -121,7 +121,7 @@ const chart = phone('Detail, results · 390 × 844',
   `${bar}
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
     <div class="sec">PVWatts v8 estimate</div>
-    <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--solar-deep);letter-spacing:-.02em">${fmt(ANNUAL)}</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
+    <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">${fmt(ANNUAL)}</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">${(ANNUAL/876000*100).toFixed(1)}</span> <span class="unit">%</span></div></div>
       <div><div class="lbl">Annual radiation</div><div style="margin-top:3px"><span class="num" style="font-size:16px">6.05</span> <span class="unit">kWh/m²/day</span></div></div>
