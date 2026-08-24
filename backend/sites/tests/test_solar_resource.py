@@ -17,6 +17,7 @@ from sites.services.geocoding import NOMINATIM_GATEWAY
 from sites.services.solar_resource import (
     SOLAR_RESOURCE_SESSION,
     SOLAR_RESOURCE_TIMEOUT_SECONDS,
+    check_solar_resource_connection,
     fetch_solar_resource,
 )
 
@@ -168,6 +169,33 @@ def resolved_nominatim_response() -> Mock:
                 }
             ]
         ),
+    )
+
+
+def test_connection_check_uses_a_fixed_coordinate_and_the_production_validator(
+    monkeypatch: pytest.MonkeyPatch,
+    settings: Settings,
+) -> None:
+    settings.NLR_API_KEY = "test-api-key"
+    settings.NLR_API_BASE = "https://developer.example.test"
+    solar_get = Mock(
+        return_value=Mock(
+            status_code=200,
+            text=json.dumps(deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)),
+        )
+    )
+    monkeypatch.setattr(SOLAR_RESOURCE_SESSION, "get", solar_get)
+
+    result = check_solar_resource_connection()
+
+    assert result.annual_ghi_kwh_m2_day == 4.81
+    assert result.annual_dni_kwh_m2_day == 6.06
+    assert result.annual_latitude_tilt_kwh_m2_day == 5.82
+    assert result.monthly_solar_data == EXPECTED_MONTHLY_SOLAR_DATA
+    solar_get.assert_called_once_with(
+        "https://developer.example.test/api/solar/solar_resource/v1.json",
+        params={"api_key": "test-api-key", "lat": 40.0, "lon": -105.0},
+        timeout=SOLAR_RESOURCE_TIMEOUT_SECONDS,
     )
 
 

@@ -15,7 +15,8 @@ from sites.models import GeocodeStatus, Site
 
 logger = logging.getLogger(__name__)
 
-NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_SEARCH_PATH = "/search"
+NOMINATIM_STATUS_PATH = "/status"
 NOMINATIM_TIMEOUT_SECONDS = 10
 NOMINATIM_MINIMUM_INTERVAL_SECONDS = 1.1
 
@@ -30,11 +31,21 @@ class GeocodingOutcome:
     error: str | None = None
 
 
+@dataclass(frozen=True)
+class NominatimStatus:
+    status: int
+    message: str
+
+
 class UnexpectedGeocodingResponse(ValueError):
     pass
 
 
 class GeocodingConfigurationError(ValueError):
+    pass
+
+
+class NominatimStatusCheckError(RuntimeError):
     pass
 
 
@@ -53,6 +64,30 @@ class NominatimGateway:
         self._last_request_started_at: float | None = None
 
     def search(self, address: str) -> requests.Response:
+        params: dict[str, str | int] = {
+            "q": address,
+            "format": "jsonv2",
+            "limit": 1,
+            "countrycodes": "us",
+        }
+        return self._get(self._url(NOMINATIM_SEARCH_PATH), params=params)
+
+    def status(self) -> requests.Response:
+        return self._get(self._url(NOMINATIM_STATUS_PATH), params={"format": "json"})
+
+    @staticmethod
+    def _url(path: str) -> str:
+        base_url = settings.NOMINATIM_BASE_URL
+        if not isinstance(base_url, str) or not base_url.strip():
+            raise GeocodingConfigurationError
+        return f"{base_url.rstrip('/')}{path}"
+
+    def _get(
+        self,
+        url: str,
+        *,
+        params: dict[str, str | int],
+    ) -> requests.Response:
         contact_email = settings.CONTACT_EMAIL
         if not isinstance(contact_email, str):
             raise GeocodingConfigurationError
@@ -66,12 +101,6 @@ class NominatimGateway:
                 "CONTACT_EMAIL is not configured; Nominatim requests will use "
                 "the application-only User-Agent."
             )
-        params: dict[str, str | int] = {
-            "q": address,
-            "format": "jsonv2",
-            "limit": 1,
-            "countrycodes": "us",
-        }
         with self._request_lock:
             now = self._monotonic()
             if self._last_request_started_at is not None:
@@ -83,7 +112,7 @@ class NominatimGateway:
                     now = self._monotonic()
             self._last_request_started_at = now
             return self.session.get(
-                NOMINATIM_SEARCH_URL,
+                url,
                 params=params,
                 headers={"User-Agent": user_agent},
                 timeout=NOMINATIM_TIMEOUT_SECONDS,
@@ -91,6 +120,55 @@ class NominatimGateway:
 
 
 NOMINATIM_GATEWAY = NominatimGateway(requests.Session())
+
+
+def check_nominatim_status() -> NominatimStatus:
+    try:
+        response = NOMINATIM_GATEWAY.status()
+    except GeocodingConfigurationError:
+        raise NominatimStatusCheckError("Nominatim configuration is invalid") from None
+    except requests.Timeout:
+        raise NominatimStatusCheckError(
+            f"Nominatim status timed out after {NOMINATIM_TIMEOUT_SECONDS}s"
+        ) from None
+    except requests.ConnectionError:
+        raise NominatimStatusCheckError("Nominatim status is unavailable") from None
+    except requests.RequestException:
+        raise NominatimStatusCheckError("Nominatim status request failed") from None
+
+    if response.status_code != 200:
+        raise NominatimStatusCheckError(
+            f"Nominatim status returned HTTP {response.status_code}"
+        )
+    try:
+        status = _parse_status(response.text)
+    except UnexpectedGeocodingResponse:
+        raise NominatimStatusCheckError(
+            "Nominatim status returned an unexpected response"
+        ) from None
+    if status.status != 0:
+        safe_message = " ".join(status.message.split())[:200]
+        raise NominatimStatusCheckError(
+            f"Nominatim reported an unhealthy status: {safe_message}"
+        )
+    return status
+
+
+def _parse_status(response_text: str) -> NominatimStatus:
+    try:
+        payload = json.loads(response_text)
+    except json.JSONDecodeError as error:
+        raise UnexpectedGeocodingResponse from error
+    if not isinstance(payload, dict):
+        raise UnexpectedGeocodingResponse
+
+    status = payload.get("status")
+    message = payload.get("message")
+    if isinstance(status, bool) or not isinstance(status, int):
+        raise UnexpectedGeocodingResponse
+    if not isinstance(message, str) or not message.strip():
+        raise UnexpectedGeocodingResponse
+    return NominatimStatus(status=status, message=message)
 
 
 def geocode_site(

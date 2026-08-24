@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 SOLAR_RESOURCE_ENDPOINT_PATH = "/api/solar/solar_resource/v1.json"
 SOLAR_RESOURCE_TIMEOUT_SECONDS = 10
 SOLAR_RESOURCE_SESSION = requests.Session()
+SOLAR_RESOURCE_CHECK_LATITUDE = 40.0
+SOLAR_RESOURCE_CHECK_LONGITUDE = -105.0
 
 
 @dataclass(frozen=True)
@@ -37,8 +39,73 @@ class SolarResourceProviderError(ValueError):
         super().__init__("Solar Resource provider reported an error")
 
 
+class SolarResourceCheckError(RuntimeError):
+    pass
+
+
 def _reject_non_standard_json_constant(_: str) -> Never:
     raise UnexpectedSolarResourceResponse
+
+
+def request_solar_resource(
+    *,
+    latitude: float,
+    longitude: float,
+    api_key: str,
+) -> requests.Response:
+    endpoint = f"{settings.NLR_API_BASE.rstrip('/')}{SOLAR_RESOURCE_ENDPOINT_PATH}"
+    params: dict[str, str | float] = {
+        "api_key": api_key,
+        "lat": latitude,
+        "lon": longitude,
+    }
+    return SOLAR_RESOURCE_SESSION.get(
+        endpoint,
+        params=params,
+        timeout=SOLAR_RESOURCE_TIMEOUT_SECONDS,
+    )
+
+
+def check_solar_resource_connection() -> SolarResourceResult:
+    api_key = settings.NLR_API_KEY
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise SolarResourceCheckError("NLR_API_KEY not configured")
+
+    try:
+        response = request_solar_resource(
+            latitude=SOLAR_RESOURCE_CHECK_LATITUDE,
+            longitude=SOLAR_RESOURCE_CHECK_LONGITUDE,
+            api_key=api_key,
+        )
+    except requests.Timeout:
+        raise SolarResourceCheckError(
+            f"Solar Resource check timed out after {SOLAR_RESOURCE_TIMEOUT_SECONDS}s"
+        ) from None
+    except requests.ConnectionError:
+        raise SolarResourceCheckError(
+            "Solar Resource check service is unavailable"
+        ) from None
+    except requests.RequestException:
+        raise SolarResourceCheckError("Solar Resource check request failed") from None
+
+    if response.status_code == 429:
+        raise SolarResourceCheckError(
+            "NLR rate limit exceeded - retry in about an hour"
+        )
+    if not 200 <= response.status_code < 300:
+        raise SolarResourceCheckError(
+            f"Solar Resource check returned HTTP {response.status_code}"
+        )
+    try:
+        return parse_solar_resource_response(response.text)
+    except SolarResourceProviderError:
+        raise SolarResourceCheckError(
+            "Solar Resource check provider reported an error"
+        ) from None
+    except UnexpectedSolarResourceResponse:
+        raise SolarResourceCheckError(
+            "Solar Resource check returned an unexpected response"
+        ) from None
 
 
 def fetch_solar_resource(site: Site) -> None:
@@ -58,17 +125,11 @@ def fetch_solar_resource(site: Site) -> None:
         _persist_failure(site, "NLR_API_KEY not configured")
         return
 
-    endpoint = f"{settings.NLR_API_BASE.rstrip('/')}{SOLAR_RESOURCE_ENDPOINT_PATH}"
-    params: dict[str, str | float] = {
-        "api_key": api_key,
-        "lat": latitude,
-        "lon": longitude,
-    }
     try:
-        response = SOLAR_RESOURCE_SESSION.get(
-            endpoint,
-            params=params,
-            timeout=SOLAR_RESOURCE_TIMEOUT_SECONDS,
+        response = request_solar_resource(
+            latitude=latitude,
+            longitude=longitude,
+            api_key=api_key,
         )
     except requests.Timeout:
         _persist_failure(

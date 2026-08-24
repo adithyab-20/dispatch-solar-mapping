@@ -12,6 +12,12 @@ on:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
+    inputs:
+      run_live_provider_tests:
+        description: Run the opt-in live Nominatim and NLR integration tests
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -66,3 +72,41 @@ jobs:
         run: |
           uv run python manage.py check
           uv run python manage.py makemigrations --check --dry-run
+
+  live-providers:
+    name: Live provider integration tests
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live_provider_tests }}
+    needs: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      NLR_API_KEY: ${{ secrets.NLR_API_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.11.28"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          working-directory: backend
+
+      - name: Install locked dependencies
+        run: uv sync --locked
+
+      - name: Run live provider tests
+        run: uv run pytest sites/tests/live -m live --run-live

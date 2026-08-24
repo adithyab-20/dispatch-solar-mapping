@@ -29,6 +29,9 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "-ra --strict-markers --disable-socket"
 pythonpath = ["."]
 testpaths = ["sites"]
+markers = [
+    "live: contacts explicitly approved live provider endpoints",
+]
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
