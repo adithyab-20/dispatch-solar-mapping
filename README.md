@@ -113,6 +113,8 @@ Run these from the repository root.
 | `make import-sync` | Treat the input as the complete active set and deactivate omitted sites. |
 | `make verify` | Run the complete offline backend and frontend verification suite. |
 | `make live-check` | Explicitly make three non-mutating provider connectivity requests. |
+| `make test` | Compatibility alias for `make verify`. |
+| `make check-apis` | Compatibility alias for `make live-check`. |
 
 Both import targets use `data/sites_initial.json` by default. Supply another
 JSON array with a root-relative or absolute path when needed:
@@ -131,8 +133,9 @@ Each row has this shape:
 }
 ```
 
-`make import` remains an alias for the safe, additive `import-upsert` behavior.
-Authoritative replacement is always named explicitly as `import-sync`.
+`make import` remains a compatibility alias for the original authoritative
+`import-sync` behavior. Prefer the explicit target so the deactivation behavior
+is visible at the call site.
 
 ## Architecture
 
@@ -318,7 +321,8 @@ It reads/writes/deletes no Site record and prints no key, full request URL,
 query parameters, provider body, or raw request exception. Missing
 configuration or any connectivity/contract failure produces safe output and a
 nonzero exit status. The check is excluded from ordinary tests and CI events;
-the GitHub Actions live job is manual only.
+the GitHub Actions live pytest job is manual only. `make check-apis` is retained
+as an alias for the same operator command.
 
 ## Configuration reference
 

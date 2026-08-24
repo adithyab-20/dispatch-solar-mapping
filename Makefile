@@ -2,7 +2,7 @@ SITES_FILE ?= data/sites_initial.json
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup backend frontend import import-upsert import-sync verify backend-check frontend-check live-check
+.PHONY: help setup backend frontend import import-upsert import-sync test verify backend-check frontend-check check-apis live-check
 
 help:
 	@echo "Local workflow"
@@ -27,14 +27,16 @@ backend:
 frontend:
 	cd frontend && bun run dev
 
-# Kept as an additive compatibility alias; authoritative replacement is always explicit.
-import: import-upsert
+# Preserve the original authoritative sample-import target for compatibility.
+import: import-sync
 
 import-upsert:
 	cd backend && uv run python manage.py import_sites "$(abspath $(SITES_FILE))" --mode upsert
 
 import-sync:
 	cd backend && uv run python manage.py import_sites "$(abspath $(SITES_FILE))" --mode sync
+
+test: verify
 
 verify: backend-check frontend-check
 
@@ -52,4 +54,6 @@ frontend-check:
 	cd frontend && bun run lint
 
 live-check:
-	cd backend && uv run pytest sites/tests/live -m live --run-live
+	cd backend && uv run python manage.py check_external_apis
+
+check-apis: live-check

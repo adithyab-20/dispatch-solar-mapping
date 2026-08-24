@@ -25,6 +25,7 @@ def test_nominatim_configuration_and_traffic_stay_in_the_shared_gateway() -> Non
     backend_root = PROJECT_ROOT / "backend"
     allowed_paths = {
         backend_root / "config" / "settings.py",
+        backend_root / "sites" / "management" / "commands" / "check_external_apis.py",
         backend_root / "sites" / "services" / "geocoding.py",
     }
     production_paths = [

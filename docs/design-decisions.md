@@ -835,17 +835,19 @@ It also displays the geocoding attribution required by Nominatim.
 
 ### 10.1 Environment files
 
-The repository-root `.env.example` is tracked and intentionally includes the
-developer's public contact email:
+The repository-root `.env.example` is tracked and contains placeholders rather
+than a developer's personal contact:
 
 ```dotenv
 NLR_API_KEY=get-a-free-key-at-developer.nlr.gov
-CONTACT_EMAIL=ab12095@nyu.edu
+NLR_API_BASE=https://developer.nlr.gov
+CONTACT_EMAIL=you@example.com
 NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
 ```
 
 The local `.env` is gitignored and copied from the example without being
-overwritten. The developer fills in `NLR_API_KEY`.
+overwritten. The developer fills in `NLR_API_KEY` and a real monitored
+`CONTACT_EMAIL` before live calls.
 
 `python-dotenv` loads the repository-root `.env` exactly once in Django
 settings using a path derived from `__file__`, never the current working
@@ -875,19 +877,25 @@ A repository-root Makefile provides:
 
 - `make setup`: run `uv sync`, migrate, run `bun install`, and copy both env
   examples into place only when their targets do not exist.
-- `make import`: sync `data/sites_initial.json` through `import_sites`.
+- `make import-upsert`: add/reactivate rows from `data/sites_initial.json`.
+- `make import-sync`: make `data/sites_initial.json` the authoritative active
+  set.
+- `make import`: compatibility alias for `make import-sync`.
 - `make backend`: run Django's development server in terminal 1.
 - `make frontend`: run Next.js through Bun in terminal 2.
-- `make test`: run backend pytest, frontend lint, and frontend tests.
-- `make check-apis`: run the explicit live external-service smoke check.
+- `make verify`: run backend tests/static checks and frontend tests/lint/type
+  checking.
+- `make test`: compatibility alias for `make verify`.
+- `make live-check`: run the explicit live external-service smoke check.
+- `make check-apis`: compatibility alias for `make live-check`.
 
 There is no combined `make dev` runner.
 
 README quickstart:
 
 1. `make setup`
-2. Add `NLR_API_KEY` to `.env`.
-3. `make import`
+2. Add `NLR_API_KEY` and a real `CONTACT_EMAIL` to `.env`.
+3. `make import-upsert`
 4. Run `make backend` in terminal 1.
 5. Run `make frontend` in terminal 2.
 6. Open `http://localhost:3000`.
@@ -905,9 +913,9 @@ false and no scheduled trigger is permitted.
 
 Nominatim uses its dedicated `/status?format=json` endpoint through the same
 shared session, User-Agent, lock, limiter, and timeout gateway. It passes only
-when HTTP status is 200 and JSON `status` is `0`. A nonzero body status reports
-Nominatim's own safe status message. It does not issue a search query; the
-command explains that the search path is exercised during the first real site
+when HTTP status is 200 and JSON `status` is `0`. A nonzero body status maps to
+a fixed safe error and never echoes the provider-controlled message. It does not
+issue a search query; the search path is exercised during the first real site
 import.
 
 The NLR legs call Solar Resource and PVWatts once each at a fixed, documented
