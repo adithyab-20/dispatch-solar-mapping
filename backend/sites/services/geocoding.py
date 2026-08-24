@@ -147,10 +147,7 @@ def check_nominatim_status() -> NominatimStatus:
             "Nominatim status returned an unexpected response"
         ) from None
     if status.status != 0:
-        safe_message = " ".join(status.message.split())[:200]
-        raise NominatimStatusCheckError(
-            f"Nominatim reported an unhealthy status: {safe_message}"
-        )
+        raise NominatimStatusCheckError("Nominatim reported an unhealthy status")
     return status
 
 

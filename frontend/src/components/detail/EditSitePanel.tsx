@@ -127,7 +127,7 @@ export function EditSitePanel({ site, open, onClose, onSave }: EditSitePanelProp
 
           <div className="edit-field">
             <label htmlFor="edit-site-name">
-            <span className="lbl">Display name</span>
+              <span className="lbl">Display name</span>
             </label>
             <input
               id="edit-site-name"
@@ -141,7 +141,7 @@ export function EditSitePanel({ site, open, onClose, onSave }: EditSitePanelProp
 
           <div className="edit-field">
             <label htmlFor="edit-site-address">
-            <span className="lbl">Address</span>
+              <span className="lbl">Address</span>
             </label>
             <input
               id="edit-site-address"

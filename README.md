@@ -1,218 +1,338 @@
 # Dispatch Energy Solar
 
-A local Django + React application for mapping U.S. solar sites and reviewing
-their Solar Resource and PVWatts results. The backend owns the Site domain, an
-active-site API, and an idempotent import workflow that geocodes each site,
-retrieves Solar Resource V1 data, and runs a standardized PVWatts V8 estimate.
-The frontend renders the catalogue on a map, opens a detail view per site, and
-lets operators upload and deactivate sites from the browser.
+A local Django and Next.js application for importing U.S. solar sites, resolving
+their addresses, displaying resolved locations on a map, and reviewing Solar
+Resource V1 and PVWatts V8 results. All active sites stay visible in the
+catalogue even when an address cannot be mapped or a provider fails.
+
+## What the application does
+
+- Imports named sites from JSON in additive (`upsert`) or authoritative (`sync`)
+  mode.
+- Geocodes new or meaningfully changed addresses through Nominatim.
+- Retrieves Solar Resource irradiance and an independent PVWatts production
+  estimate for each resolved location.
+- Shows one marker per active, resolved site and a catalogue row for every active
+  site.
+- Preserves safe, stage-specific status, error, result, and last-attempt data.
+- Supports focused retries, site edits, browser uploads, soft deactivation, and
+  Django Admin lifecycle actions.
 
 ## Screenshots
 
-**Landing** — the active-site catalogue beside the map. Sites resolve into "On
-the map" and "Not on the map", and select mode deactivates a chosen subset.
+**Landing page:** the complete active catalogue beside the map. Sites are split
+between **On the map** and **Not on the map**.
 
 ![Landing page](images/Landing_Page.png)
 
-**Site detail** — the complete stored state for one site, with focused retries
-for geocoding, Solar Resource, and PVWatts.
+**Site detail:** resolved location, processing state, results, assumptions, and
+focused retry actions.
 
-![Site detail, overview](images/Site_Detail_1.png)
+![Site detail overview](images/Site_Detail_1.png)
 
-![Site detail, results](images/Site_Detail_2.png)
+![Site detail results](images/Site_Detail_2.png)
 
-## Quickstart
+## Run locally from a clean checkout
 
-Requirements:
-- Python 3.12–3.14 and [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
-- [Bun](https://bun.sh/) for the frontend
+### Prerequisites
 
-### 1. Backend (API on `:8000`)
+- Python 3.12-3.14
+- [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+- [Bun](https://bun.sh/)
+- A free [NLR developer API key](https://developer.nlr.gov/signup/)
+
+### 1. Install and configure
+
+From the repository root:
 
 ```sh
-cp -n .env.example .env
-cd backend
-uv sync
-uv run python manage.py migrate
-uv run python manage.py import_sites ../data/sites_initial.json --mode upsert
-uv run python manage.py runserver 127.0.0.1:8000
+make setup
 ```
 
-### 2. Frontend (app on `:3000`)
+`make setup`:
+
+1. Copies `.env.example` to `.env` only when `.env` does not exist.
+2. Copies `frontend/.env.local.example` to `frontend/.env.local` only when the
+   local file does not exist.
+3. Installs the locked backend and frontend dependencies.
+4. Applies Django migrations.
+
+Edit `.env` and replace the two placeholders before importing sites:
+
+```dotenv
+NLR_API_KEY=your-nlr-api-key
+NLR_API_BASE=https://developer.nlr.gov
+CONTACT_EMAIL=you@example.com
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
+```
+
+The contact email identifies this application to the public Nominatim service.
+Do not commit `.env`; it is ignored by Git.
+
+### 2. Import the sample sites
+
+```sh
+make import-upsert
+```
+
+The tracked sample contains six named sites, including one deliberately
+unresolvable address. A successful import therefore leaves at least five named
+active sites available in the application. Re-running the same command is
+idempotent and makes no provider requests for unchanged rows.
+
+### 3. Start the backend
+
+```sh
+make backend
+```
+
+The Django API and Admin are available at <http://127.0.0.1:8000/api/> and
+<http://127.0.0.1:8000/admin/>.
+
+### 4. Start the frontend
 
 In a second terminal:
 
 ```sh
-cd frontend
-cp -n .env.local.example .env.local
-bun install
-bun run dev
+make frontend
 ```
 
-Open <http://127.0.0.1:3000>. The only allowed browser origins are
-`http://localhost:3000` and `http://127.0.0.1:3000`; cross-origin credentials
-and allow-all CORS are disabled.
+Open <http://127.0.0.1:3000>. The backend accepts only the expected localhost
+frontend origins; credentialed and allow-all CORS are disabled.
 
-## Managing the site list
+## Everyday commands
 
-A site's identity is the normalized `(name, address)` pair. Two rows are the
-same site only when **both** match; sharing just a name or just an address
-creates a separate record and reports a warning so a human can spot a typo.
-Deactivation is a reversible soft delete — the record and all its stored
-provider results are kept, just hidden from the list and map.
+Run these from the repository root.
 
-### From the browser
+| Command | Purpose |
+| --- | --- |
+| `make setup` | Copy missing local env files, install locked dependencies, and migrate. |
+| `make backend` | Start Django at `127.0.0.1:8000`. |
+| `make frontend` | Start Next.js at `127.0.0.1:3000`. |
+| `make import-upsert` | Add new pairs and reactivate exact matches without deactivating omitted sites. |
+| `make import-sync` | Treat the input as the complete active set and deactivate omitted sites. |
+| `make verify` | Run the complete offline backend and frontend verification suite. |
+| `make live-check` | Explicitly make three non-mutating provider connectivity requests. |
+| `make test` | Compatibility alias for `make verify`. |
+| `make check-apis` | Compatibility alias for `make live-check`. |
 
-- **Upload sites** (app bar) — paste-free upload of a JSON array of
-  `{ "name", "address" }` objects. New pairs are created, geocoded, and scored;
-  inactive exact matches are reactivated without resetting their stored state.
-  Nothing is ever removed. Warnings appear only for rows that create a new
-  record which partially matches an existing active site.
-- **Deactivate** — use **Select** in the catalogue rail, choose sites, and
-  deactivate them from the pinned action bar.
-
-### From the terminal
+Both import targets use `data/sites_initial.json` by default. Supply another
+JSON array with a root-relative or absolute path when needed:
 
 ```sh
-cd backend
-uv run python manage.py import_sites PATH_TO_SITES.json --mode upsert   # additive
-uv run python manage.py import_sites PATH_TO_SITES.json --mode sync      # authoritative
+make import-upsert SITES_FILE=data/another-site-set.json
+make import-sync SITES_FILE=/absolute/path/to/authoritative-sites.json
 ```
 
-`upsert` is additive and matches the browser upload. `sync` treats the file as
-the complete authoritative active set: it validates and normalizes the entire
-document first (any invalid row aborts with no changes), then atomically creates
-new pairs, reactivates inactive exact matches, preserves active exact matches,
-and **deactivates records omitted from the file**. Records are never deleted;
-replacing a normalized pair creates a new record and deactivates the old one.
+Each row has this shape:
 
-> **Sync is terminal-only by design.** The browser upload and the
-> `POST /api/sites/import/` endpoint accept only `upsert`, so no web action can
-> deactivate sites an operator did not explicitly select. The destructive
-> whole-list replace stays behind the command line.
+```json
+{
+  "name": "Boston Sample Site",
+  "address": "1 City Hall Square, Boston, MA 02201"
+}
+```
 
-### From Django Admin
+`make import` is a compatibility alias for the safe, additive `import-upsert`
+behavior. Authoritative replacement is always explicit as `make import-sync`.
 
-Sign in at `/admin/`, select Site records, and use **Deactivate selected
-sites** or **Reactivate selected sites**. These change lifecycle only and never
-call providers. Hard delete is available in Admin for full operator control.
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser] --> UI[Next.js / React UI]
+    UI -->|JSON over HTTP| Views[Django REST views]
+    JSON[JSON site file] --> Command[import_sites command]
+    Views --> Import[Import and lifecycle service]
+    Command --> Import
+
+    subgraph Django backend
+        Views
+        Command
+        Import --> Workflow[Site workflow]
+        Workflow --> Geocode[Geocoding gateway]
+        Workflow --> Solar[Solar Resource service]
+        Workflow --> PV[PVWatts service]
+        Import --> DB[(SQLite)]
+        Workflow --> DB
+        Views --> DB
+    end
+
+    Geocode --> Nominatim[Public Nominatim]
+    Solar --> NLR[NLR developer APIs]
+    PV --> NLR
+    UI --> Tiles[OpenStreetMap tiles]
+```
+
+### Responsibilities and provider boundaries
+
+- **Next.js/React** owns presentation and user interaction. A single API client
+  owns all backend requests; rendering and GET requests never trigger provider
+  work.
+- **Django REST views** validate the HTTP contract and translate domain outcomes
+  into safe responses. They delegate imports, lifecycle changes, and processing
+  rather than constructing provider requests.
+- **Import and workflow services** own identity matching, reconciliation,
+  invalidation, processing order, and commit-before-call behavior. The browser
+  upload and management command converge on the same import path.
+- **Provider services** are separate adapters for Nominatim, Solar Resource, and
+  PVWatts. They build requests, validate only consumed response fields, and
+  persist canonical application data instead of raw provider bodies.
+- **SQLite** is the local source of truth for Site lifecycle and the latest
+  handled outcome of each processing stage.
+
+### Site identity and lifecycle
+
+A database ID identifies a specific Site record. Imports match only the pair of
+normalized `(name, address)` values; neither field is unique alone. Normalizing
+applies Unicode NFKC, replaces punctuation with spaces, collapses whitespace,
+and case-folds. Display strings are still stored exactly as accepted.
+
+Sharing only a name or only an address creates a separate record and reports a
+warning; the application never guesses that two rows are the same physical
+asset. Active/inactive lifecycle is independent of provider status. Normal
+operation soft-deactivates records and preserves their results for later
+reactivation.
+
+### Import and update workflow
+
+`upsert` adds valid new pairs, retains active exact matches, and reactivates
+inactive exact matches. Invalid rows are reported while other rows continue.
+It never deactivates a record merely because it is omitted.
+
+`sync` first validates the complete file, then atomically creates, reactivates,
+and deactivates records so the file becomes the complete active set. Any
+structurally invalid row aborts reconciliation with no lifecycle changes.
+
+For each genuinely new Site, processing is sequential:
+
+1. Commit geocoding as `pending` and both downstream stages as `blocked`.
+2. Geocode the verbatim address and persist the handled outcome.
+3. When resolved, request Solar Resource and persist its outcome.
+4. Run PVWatts independently, even if Solar Resource failed.
+
+An address-changing PATCH and an explicit geocoding refresh clear stale
+location-dependent values and commit that empty pending/blocked state before
+external I/O. Name-only and normalization-equivalent cosmetic edits preserve
+provider state. Solar Resource and PVWatts retries clear only their own stage.
+
+## Invalid and unresolvable addresses
+
+The application distinguishes bad input, no match, and provider failure:
+
+- A row missing a non-empty string `name` or `address`, including punctuation-
+  only input, is structurally invalid. `upsert` rejects that row and continues;
+  `sync` aborts before changing any Site lifecycle state.
+- A valid address for which Nominatim returns no U.S. result becomes
+  `unresolved` with the safe explanation **No matching U.S. location was found
+  for this address.** Coordinates remain null and both downstream stages remain
+  `blocked`.
+- A timeout, connection problem, non-success HTTP response, or malformed
+  consumed response becomes `failed` with a concise stage-specific error. Raw
+  provider bodies, URLs, query parameters, API keys, headers, and exception text
+  are never persisted or shown.
+
+Unresolved and failed Sites remain active and visible under **Not on the map**,
+but never receive a marker. Their detail pages show the stage outcome and a
+focused geocoding retry. A later failure never restores stale coordinates or
+solar results.
+
+## Key tradeoffs
+
+| Decision | Benefit | Cost / boundary |
+| --- | --- | --- |
+| Synchronous, sequential processing | Simple local behavior, honest results, and easy verification. | Imports and meaningful edits wait for providers; no queue or automatic retry. |
+| Commit before external I/O | Accepted state and stale-data removal survive provider or process failures. | A crash can intentionally leave a stage `pending` for manual recovery. |
+| Exact normalized identity pair | Deterministic imports without requiring an external ID. | Semantic duplicates are warned about, not merged automatically. |
+| SQLite and process-local controls | Minimal setup for a small local assessment. | Not a multi-user or multi-process production architecture. |
+| Public Nominatim behind one gateway | Free, replaceable geocoding at assessment scale. | Production/high-volume use needs a commercial provider or self-hosted Nominatim and a distributed limiter. |
+| Canonical stored results, not raw responses | Stable API/UI shapes and no provider-body leakage. | New consumed fields require an explicit validator/model change. |
+| No persistent provider cache | Retries are fresh and records remain independent. | Only unchanged records and one import's identical address queries avoid repeat calls. |
+
+## Nominatim policy and attribution
+
+Public Nominatim is donated infrastructure and is appropriate here only for
+this small, single-process local assessment. Review the official
+[Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+Production or higher-volume use must use a commercial provider or self-hosted
+Nominatim with an appropriate distributed rate limiter.
+
+| Policy / operational concern | Application control |
+| --- | --- |
+| Custom User-Agent | Every request sends `dispatch-solar-assessment/1.0`; the configured `CONTACT_EMAIL` is included for operator identification. |
+| Single-threaded request gate | One process-local lock covers both the rate gate and the entire HTTP request, serializing all search and status traffic through one shared gateway/session. |
+| Request spacing | Nominatim request starts are spaced at least 1.1 seconds apart using a monotonic clock. |
+| Caching and repeat work | One import reuses handled results for byte-identical verbatim addresses; unchanged later imports make no call. There is no cross-run provider cache. |
+| Request triggers | Only a new import, a normalized address change, or an explicit geocoding retry performs a search. GETs, page loads, typing, and autocomplete never geocode. |
+| Timeouts | Every Nominatim request has an explicit 10-second timeout. NLR requests also use explicit 10-second timeouts. |
+| Attribution | Map tiles show [OpenStreetMap tile attribution](https://www.openstreetmap.org/copyright); the UI separately credits OpenStreetMap/Nominatim geocoding. |
+| Local-only suitability | The limiter is process-local and the data set is deliberately small. This is not a production geocoding architecture. |
 
 ## API
 
-Served under `http://127.0.0.1:8000/api/`:
+The backend serves these endpoints under `http://127.0.0.1:8000/api/`:
 
-| Method & path | Purpose |
+| Method and path | Purpose |
 | --- | --- |
-| `GET /sites/` | Active-site catalogue: identity, coordinates, geocoding status. |
-| `GET /sites/<id>/` | Complete stored state for one active site. |
-| `PATCH /sites/<id>/` | Edit name, address, or both; a meaningful address change re-runs the full workflow. |
-| `POST /sites/<id>/geocode/` | Clear location and dependent results, then re-run the workflow. |
-| `POST /sites/<id>/solar-resource/` | Clear and retry only Solar Resource (needs resolved coordinates). |
-| `POST /sites/<id>/pvwatts/` | Clear and retry only PVWatts (needs resolved coordinates). |
-| `POST /sites/import/` | Upload a site list (`upsert` only) and process new sites. |
-| `POST /sites/deactivate/` | Soft-deactivate the selected active sites; never calls providers. |
+| `GET /sites/` | List every active Site with map and catalogue fields. |
+| `GET /sites/<id>/` | Return complete stored state for one active Site. |
+| `PATCH /sites/<id>/` | Edit name/address; a normalized address change runs the full workflow. |
+| `POST /sites/<id>/geocode/` | Clear location-dependent data and run the full workflow. |
+| `POST /sites/<id>/solar-resource/` | Clear and retry Solar Resource only; resolved coordinates required. |
+| `POST /sites/<id>/pvwatts/` | Clear and retry PVWatts only; resolved coordinates required. |
+| `POST /sites/import/` | Browser-safe `upsert` import only. |
+| `POST /sites/deactivate/` | Soft-deactivate selected active Sites without provider calls. |
 
-Inactive records are excluded from the list and every ID-based operation
-returns `404` for them.
-
-## How import processing works
-
-After an upsert commits, new records are geocoded sequentially through
-Nominatim. Each resolved site then independently retrieves Solar Resource V1
-data and runs a standardized PVWatts V8 estimate through NLR. A handled Solar
-Resource failure does not block PVWatts; unresolved and geocoding-failed sites
-leave both downstream stages `blocked`. Each stage commits its pending state
-before I/O and stores either canonical results or a safe, stage-specific
-failure.
-
-Existing and reactivated sites keep their display strings and all provider
-state with no new provider calls, so an unexpected provider failure leaves the
-reconciled active set committed and only the affected new site pending a retry.
-Byte-identical addresses share one handled geocoding result within a single
-run; Solar Resource and PVWatts outcomes are never reused between records; and
-repeating an unchanged import makes no provider request.
-
-## Nominatim public-service policy
-
-The public Nominatim service is donated infrastructure, appropriate here only
-for this small local assessment. Its policy sets an absolute maximum of one
-request per second, requires an identifying User-Agent and attribution, and
-forbids autocomplete and systematic querying. This project keeps public-service
-use deliberately small and replaceable:
-
-| Policy concern | Project control |
-| --- | --- |
-| One request per second maximum | One process-local lock covers the rate gate and HTTP request; starts are at least 1.1 seconds apart. |
-| Identify the application | Every request uses `dispatch-solar-assessment/1.0`; `CONTACT_EMAIL` is included when configured. |
-| Small, single-threaded use | New sites are processed sequentially in one local process. |
-| Cache and avoid repeat searches | One import reuses byte-identical handled results, and unchanged later imports make no request. |
-| No periodic search monitoring | Live checks use Nominatim's dedicated `/status?format=json` endpoint and never submit a search. |
-| No autocomplete or systematic queries | Geocoding occurs only for explicit imports; reads and typing never call Nominatim. |
-| Switch providers without a release | `NOMINATIM_BASE_URL` can point the shared gateway at another provider or a self-hosted instance. |
-
-Do not schedule the public Nominatim check or enable it on routine push or pull
-request CI. Production or higher-volume use must switch to a commercial provider
-or a self-hosted Nominatim instance.
+Inactive IDs return `404` through the application API. Django Admin provides
+bulk deactivate/reactivate actions that change lifecycle only.
 
 ## Verification
 
-### Backend
+### Complete offline suite
 
 ```sh
-cd backend
-uv run pytest
-uv run mypy .
-uv run ruff check .
-uv run ruff format --check .
-uv run python manage.py check
-uv run python manage.py makemigrations --check --dry-run
+make verify
 ```
 
-Automated tests cannot reach the network by construction: `pytest-socket` is
-enabled with `--disable-socket` in the checked-in pytest configuration.
+This runs backend pytest, mypy, Ruff lint/format checks, Django system and
+migration checks, plus frontend Vitest, TypeScript, and ESLint. Backend tests
+are offline by construction: `pytest-socket` disables sockets for the ordinary
+suite. Running the application and `make live-check` are the only intended live
+provider paths.
 
-### Frontend
+### Explicit live connectivity check
+
+After replacing the `.env` placeholders:
 
 ```sh
-cd frontend
-bun run test
-bun run typecheck
-bun run lint
+make live-check
 ```
 
-### Opt-in live provider integration tests
+The opt-in check makes exactly three requests:
 
-The live tests are non-mutating and excluded from ordinary runs. One makes
-exactly one Nominatim status request (not a geocoding search); the other makes
-exactly one Solar Resource V1 request for the fixed coordinate `40, -105` and
-validates it with the production parser.
+1. Nominatim's status endpoint through the shared, policy-controlled gateway.
+2. Solar Resource V1 for fixed coordinates `40, -105`, parsed by the production
+   validator.
+3. PVWatts V8 for the same fixed coordinates, parsed by the production
+   validator.
 
-Configure a real contact email and NLR key in the untracked `.env`, then opt in
-explicitly from `backend/`:
+It reads/writes/deletes no Site record and prints no key, full request URL,
+query parameters, provider body, or raw request exception. Missing
+configuration or any connectivity/contract failure produces safe output and a
+nonzero exit status. The check is excluded from ordinary tests and CI events;
+the GitHub Actions live pytest job is manual only. `make check-apis` is retained
+as an alias for the same operator command.
 
-```sh
-uv run pytest sites/tests/live -m live --run-live
-```
+## Configuration reference
 
-Without `--run-live`, both tests are skipped and sockets remain disabled. The
-GitHub Actions live-provider job is likewise disabled for push and pull request
-events; after repository secrets `CONTACT_EMAIL` and `NLR_API_KEY` are
-configured, it can be run manually through the **Backend CI** workflow.
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `NLR_API_KEY` | `.env` | Required for Solar Resource and PVWatts. There is no demo-key fallback. |
+| `NLR_API_BASE` | `.env` | NLR developer API base; defaults to `https://developer.nlr.gov`. |
+| `CONTACT_EMAIL` | `.env` | Included in the Nominatim User-Agent; use a real monitored contact for live calls. |
+| `NOMINATIM_BASE_URL` | `.env` | Shared geocoding/status service base. |
+| `NEXT_PUBLIC_API_BASE_URL` | `frontend/.env.local` | Browser-visible Django API base; defaults to `http://127.0.0.1:8000/api`. |
 
-## Configuration
-
-`.env.example` documents the provider configuration. Copy it to the untracked
-`.env`; `python-dotenv` loads that repository-root file without overriding
-variables already present in the environment.
-
-- `CONTACT_EMAIL` — included in the Nominatim User-Agent when present; otherwise
-  the importer logs a warning and still sends a descriptive User-Agent.
-- `NOMINATIM_BASE_URL` — defaults to the public service; change it without
-  modifying source to use another provider or a self-hosted instance.
-- `NLR_API_KEY` — required for both Solar Resource and PVWatts. When absent,
-  resolved sites retain a safe configuration failure for each stage without an
-  NLR request. NLR developer APIs allow 1,000 requests per hour per key by
-  default.
-
-The frontend reads `NEXT_PUBLIC_API_BASE_URL` from `frontend/.env.local`
-(default `http://127.0.0.1:8000/api`).
+NLR developer APIs have a default limit of 1,000 requests per hour per key.
+Provider configuration failures affect their individual processing stages; they
+do not prevent the local application from starting.

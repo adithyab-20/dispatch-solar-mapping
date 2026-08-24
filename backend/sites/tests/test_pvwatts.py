@@ -18,6 +18,7 @@ from sites.services.pvwatts import (
     PVWATTS_BASE_ASSUMPTIONS,
     PVWATTS_SESSION,
     PVWATTS_TIMEOUT_SECONDS,
+    check_pvwatts_connection,
     run_pvwatts,
 )
 from sites.services.solar_resource import SOLAR_RESOURCE_SESSION
@@ -97,6 +98,36 @@ def payload_with_output(output_name: str, value: object) -> str:
     assert isinstance(outputs, dict)
     outputs[output_name] = value
     return json.dumps(payload)
+
+
+def test_connection_check_uses_fixed_coordinates_and_the_production_validator(
+    monkeypatch: pytest.MonkeyPatch,
+    settings: Settings,
+) -> None:
+    settings.NLR_API_KEY = "test-api-key"
+    settings.NLR_API_BASE = "https://developer.example.test"
+    pvwatts_get = Mock(
+        return_value=Mock(
+            status_code=200,
+            text=json.dumps(deepcopy(VALID_PVWATTS_PAYLOAD)),
+        )
+    )
+    monkeypatch.setattr(PVWATTS_SESSION, "get", pvwatts_get)
+
+    result = check_pvwatts_connection()
+
+    assert len(result.monthly_pvwatts_data) == 12
+    pvwatts_get.assert_called_once_with(
+        "https://developer.example.test/api/pvwatts/v8.json",
+        params={
+            **PVWATTS_BASE_ASSUMPTIONS,
+            "tilt": 40.0,
+            "lat": 40.0,
+            "lon": -105.0,
+            "api_key": "test-api-key",
+        },
+        timeout=PVWATTS_TIMEOUT_SECONDS,
+    )
 
 
 @pytest.mark.django_db(transaction=True)

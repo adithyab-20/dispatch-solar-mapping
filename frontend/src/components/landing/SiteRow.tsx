@@ -125,7 +125,11 @@ function RowInner({ site }: { site: SiteListItem }) {
                   kWh/yr
                 </span>
               </div>
-              {acSeries ? <div style={{ marginTop: 4 }}>{acSeries && <Spark values={acSeries} />}</div> : null}
+              {acSeries ? (
+                <div style={{ marginTop: 4 }}>
+                  <Spark values={acSeries} />
+                </div>
+              ) : null}
             </>
           ) : (
             <StatusIndicator status={site.geocode_status} />

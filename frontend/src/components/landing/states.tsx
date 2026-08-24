@@ -42,7 +42,7 @@ export function EmptyState() {
           padding: "6px 10px",
         }}
       >
-        make import
+        make import-upsert
       </code>
     </div>
   );

@@ -58,9 +58,17 @@ def test_nominatim_status_check_uses_the_policy_controlled_gateway(
         pytest.param(
             Mock(
                 status_code=200,
-                text=json.dumps({"status": 1, "message": "Database unavailable"}),
+                text=json.dumps(
+                    {
+                        "status": 1,
+                        "message": (
+                            "secret provider detail at "
+                            "https://example.test/status?api_key=secret"
+                        ),
+                    }
+                ),
             ),
-            "Nominatim reported an unhealthy status: Database unavailable",
+            "Nominatim reported an unhealthy status",
             id="unhealthy-body-status",
         ),
         pytest.param(
@@ -82,8 +90,13 @@ def test_nominatim_status_check_rejects_unhealthy_or_invalid_responses(
         Mock(return_value=response),
     )
 
-    with pytest.raises(geocoding.NominatimStatusCheckError, match=expected_error):
+    with pytest.raises(
+        geocoding.NominatimStatusCheckError, match=expected_error
+    ) as exc_info:
         geocoding.check_nominatim_status()
+
+    assert "secret" not in str(exc_info.value)
+    assert "https://" not in str(exc_info.value)
 
 
 @pytest.mark.django_db(transaction=True)
