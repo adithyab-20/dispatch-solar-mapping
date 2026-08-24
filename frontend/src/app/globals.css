@@ -21,6 +21,19 @@
   --warn-wash: #fbf0dc;
   --fail: #b3261e;
   --fail-wash: #fbe7e5;
+  /* Text/border shades sit darker than the status hues so they clear AA on the
+     matching wash background (from the approved artboards, design/gen-details.mjs). */
+  --warn-ink: #6e4e00;
+  --warn-border: #ead9b4;
+  --fail-ink: #8c2019;
+  --fail-border: #e8c6c3;
+  --teal-deep: #2c6b3a;
+  /* Chart grid line (UI brief §2: "Grid lines in charts are #ECECEC"). */
+  --grid: #ececec;
+  /* PVWatts marks — the only non-green: bars, headline figure, section eyebrow. */
+  --pv: #c96a1c;
+  --pv-deep: #b9601b;
+  --pv-deepest: #9a4f14;
   --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --display: "Poppins", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -78,6 +91,85 @@ a {
   text-transform: uppercase;
   font-weight: 300;
   color: var(--muted);
+}
+
+/* Section eyebrow label, Poppins tracked wide (UI brief §2). */
+.sec {
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ok);
+  font-weight: 600;
+  margin: 0;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+}
+
+/* Every number and identifier is tabular mono, so columns align. */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.unit {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+}
+
+/* Status chip: shape + word + colour, never colour alone (UI brief §2). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 2px 7px 2px 5px;
+  border-radius: 2px;
+}
+
+.c-ok {
+  color: var(--ok);
+  background: var(--ok-wash);
+}
+.c-warn {
+  color: var(--warn);
+  background: var(--warn-wash);
+}
+.c-fail {
+  color: var(--fail);
+  background: var(--fail-wash);
+}
+.c-mute {
+  color: var(--muted);
+  background: var(--panel-2);
+}
+.c-run {
+  color: var(--solar-deep);
+  background: var(--solar-wash);
+}
+
+/* Visually hidden but available to assistive tech and the live region. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .btn {
@@ -142,6 +234,181 @@ button:focus-visible {
   .map-panel {
     min-height: 200px;
   }
+}
+
+/* Catalogue row: the irradiance line stays hidden until the row is hovered,
+   focused, or highlighted from the map. Highlighting uses a left rule + tint,
+   never colour alone. */
+.site-row {
+  display: block;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 0 solid transparent;
+  color: inherit;
+}
+
+.site-row:hover,
+.site-row:focus-visible {
+  border-left-width: 4px;
+  border-left-color: var(--rule-strong);
+  padding-left: 14px;
+  background: var(--panel-2);
+}
+
+.site-row.is-highlighted {
+  border-left-width: 4px;
+  border-left-color: var(--solar);
+  padding-left: 14px;
+  background: var(--solar-wash);
+}
+
+.site-row .row-irr {
+  display: none;
+}
+
+.site-row:hover .row-irr,
+.site-row:focus-visible .row-irr {
+  display: flex;
+}
+
+.site-row.is-highlighted .row-irr {
+  display: flex;
+}
+
+/* Collapsed rail: a 56px spine with the count and a status-dot summary. */
+.catalog-rail.is-collapsed {
+  width: 56px;
+}
+
+.spine-site {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spine-site:hover,
+.spine-site:focus-visible {
+  background: var(--solar-wash);
+}
+
+/* Site detail page: a single vertical stack that scrolls under the app bar. */
+.detail-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ground);
+}
+
+.detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.location-strip {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+}
+
+.solar-multiples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.assumptions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+}
+
+/* The monthly backing table scrolls sideways rather than being dropped (§5). */
+.month-table-scroll {
+  overflow-x: auto;
+}
+
+@media (max-width: 900px) {
+  .location-strip {
+    grid-template-columns: 1fr;
+  }
+  .location-strip > * {
+    border-left: 0 !important;
+    border-top: 1px solid var(--rule);
+  }
+  .location-strip > *:first-child {
+    border-top: 0;
+  }
+  .solar-multiples {
+    grid-template-columns: 1fr;
+  }
+  .assumptions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .detail-stack {
+    padding: 12px 14px 20px;
+  }
+  .assumptions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes page-forward-out {
+  to {
+    opacity: 0.72;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes page-forward-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes page-back-out {
+  to {
+    opacity: 0.72;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes page-back-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(-3%);
+  }
+}
+
+html[data-page-transition="forward"]::view-transition-old(root) {
+  animation: 220ms ease-in both page-forward-out;
+}
+
+html[data-page-transition="forward"]::view-transition-new(root) {
+  animation: 260ms ease-out both page-forward-in;
+}
+
+html[data-page-transition="back"]::view-transition-old(root) {
+  animation: 220ms ease-in both page-back-out;
+}
+
+html[data-page-transition="back"]::view-transition-new(root) {
+  animation: 260ms ease-out both page-back-in;
 }
 
 @media (prefers-reduced-motion: reduce) {

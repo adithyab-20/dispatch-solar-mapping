@@ -41,7 +41,21 @@ describe("apiBaseUrl", () => {
 describe("apiClient.fetchSites", () => {
   it("requests the sites list against the configured base and returns the rows", async () => {
     const rows: SiteListItem[] = [
-      { id: 1, name: "A", address: "1 Main", latitude: 40, longitude: -105, geocode_status: "resolved" },
+      {
+        id: 1,
+        name: "A",
+        address: "1 Main",
+        latitude: 40,
+        longitude: -105,
+        geocode_status: "resolved",
+        solar_resource_status: "succeeded",
+        annual_ghi_kwh_m2_day: 5.6,
+        annual_dni_kwh_m2_day: 6.5,
+        annual_latitude_tilt_kwh_m2_day: 6.1,
+        pvwatts_status: "succeeded",
+        annual_ac_kwh: 179270,
+        monthly_pvwatts_data: null,
+      },
     ];
     const fetchMock = mockFetchOnce({ json: async () => rows });
 

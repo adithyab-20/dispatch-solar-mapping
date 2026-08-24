@@ -1,28 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { AppBar } from "@/components/AppBar";
 import { CatalogRail } from "@/components/landing/CatalogRail";
 import { MapPanel } from "@/components/landing/MapPanel";
+import { RailSpine } from "@/components/landing/RailSpine";
 import { EmptyState, ErrorState, LoadingState } from "@/components/landing/states";
-import { ApiError, type ApiErrorKind, apiBaseUrl, apiClient } from "@/lib/api/client";
+import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites } from "@/lib/sites";
+import { startPageTransition } from "@/lib/page-transition";
 
 type View =
   | { phase: "loading" }
   | { phase: "error"; kind: ApiErrorKind }
   | { phase: "ready"; sites: SiteListItem[] };
-
-function apiOrigin(): string {
-  const base = apiBaseUrl();
-  try {
-    return new URL(base).host;
-  } catch {
-    return base;
-  }
-}
 
 /**
  * The landing page: fetches the active-site catalogue through the shared API
@@ -30,7 +24,13 @@ function apiOrigin(): string {
  * Rendering never triggers a provider request — only this one read call runs.
  */
 export function LandingView() {
+  const router = useRouter();
   const [view, setView] = useState<View>({ phase: "loading" });
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  // Bumped whenever the rail opens or closes so Leaflet re-measures its canvas
+  // without changing the user's zoom or center.
+  const [layoutSignal, setLayoutSignal] = useState(0);
 
   const load = useCallback(async () => {
     setView({ phase: "loading" });
@@ -47,15 +47,41 @@ export function LandingView() {
     void load();
   }, [load]);
 
+  const toggleRail = useCallback(() => {
+    setCollapsed((value) => !value);
+    setHighlightedId(null);
+    setLayoutSignal((n) => n + 1);
+  }, []);
+
+  const openDetail = useCallback((id: number) => {
+    startPageTransition("forward", () => router.push(`/sites/${id}`));
+  }, [router]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar apiOrigin={apiOrigin()} />
-      {renderBody(view, load)}
+      {renderBody(view, load, {
+        highlightedId,
+        onHighlight: setHighlightedId,
+        onOpenDetail: openDetail,
+        collapsed,
+        toggleRail,
+        layoutSignal,
+      })}
     </div>
   );
 }
 
-function renderBody(view: View, retry: () => void) {
+interface RailState {
+  highlightedId: number | null;
+  onHighlight: (id: number | null) => void;
+  onOpenDetail: (id: number) => void;
+  collapsed: boolean;
+  toggleRail: () => void;
+  layoutSignal: number;
+}
+
+function renderBody(view: View, retry: () => void, rail: RailState) {
   if (view.phase === "loading") {
     return (
       <div className="landing-split">
@@ -81,9 +107,31 @@ function renderBody(view: View, retry: () => void) {
   const { mapped, unmapped } = partitionSites(view.sites);
   return (
     <div className="landing-split">
-      <CatalogRail sites={view.sites} />
+      {rail.collapsed ? (
+        <RailSpine
+          sites={view.sites}
+          highlightedId={rail.highlightedId}
+          onExpand={rail.toggleRail}
+          onHighlight={rail.onHighlight}
+          onOpenDetail={rail.onOpenDetail}
+        />
+      ) : (
+        <CatalogRail
+          sites={view.sites}
+          highlightedId={rail.highlightedId}
+          onHighlight={rail.onHighlight}
+          onCollapse={rail.toggleRail}
+        />
+      )}
       <div className="map-panel">
-        <MapPanel sites={mapped} unmappedCount={unmapped.length} />
+        <MapPanel
+          sites={mapped}
+          unmappedCount={unmapped.length}
+          highlightedId={rail.highlightedId}
+          onHighlight={rail.onHighlight}
+          onOpenDetail={rail.onOpenDetail}
+          layoutSignal={rail.layoutSignal}
+        />
       </div>
     </div>
   );

@@ -1,24 +1,18 @@
-import Link from "next/link";
+import { DetailView } from "@/components/detail/DetailView";
 
-// Placeholder for the site detail experience, which lands in ticket #9. The
-// route exists now so every catalogue row and map marker has a real target to
-// navigate to. It performs no data fetching and triggers no provider work.
+// Parse the route id to a positive integer. Anything else (a non-numeric slug,
+// a negative, a float) can never be an active site id, so we hand the view a
+// null id and it renders the same not-found response as an unknown record —
+// never revealing whether an inactive record exists.
+function parseSiteId(raw: string): number | null {
+  return /^\d+$/.test(raw) ? Number(raw) : null;
+}
+
 export default async function SiteDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return (
-    <main style={{ padding: 24 }}>
-      <Link href="/" style={{ color: "var(--solar)" }}>
-        ← All sites
-      </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 600, marginTop: 12 }}>Site #{id}</h1>
-      <p style={{ color: "var(--muted)", fontSize: 13 }}>
-        The full site detail and solar-results experience arrives in a later
-        slice.
-      </p>
-    </main>
-  );
+  return <DetailView siteId={parseSiteId(id)} />;
 }

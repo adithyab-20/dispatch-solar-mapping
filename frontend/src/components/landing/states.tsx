@@ -1,4 +1,4 @@
-import type { ApiErrorKind } from "@/lib/api/client";
+import { type ApiErrorKind, ERROR_KIND_PHRASE } from "@/lib/api/client";
 
 const panelStyle: React.CSSProperties = {
   flex: 1,
@@ -48,12 +48,6 @@ export function EmptyState() {
   );
 }
 
-const KIND_PHRASE: Record<ApiErrorKind, string> = {
-  network: "network error",
-  http: "server error",
-  parse: "unexpected response",
-};
-
 /**
  * Catalogue request failed: names the failing request without leaking keys,
  * query params, or raw exception text; states no data changed; offers a retry.
@@ -71,7 +65,7 @@ export function ErrorState({
         Could not reach the application API
       </h2>
       <p className="mono" style={{ margin: 0, fontSize: 11.5, color: "var(--muted)" }}>
-        GET /api/sites/ · {KIND_PHRASE[kind]}
+        GET /api/sites/ · {ERROR_KIND_PHRASE[kind]}
       </p>
       <p style={{ maxWidth: 360, margin: 0, fontSize: 12.5, color: "var(--muted)" }}>
         No data changed. Make sure the backend is running, then try again.
