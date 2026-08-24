@@ -7,15 +7,19 @@ import { latLngBounds } from "leaflet";
 import Link from "next/link";
 
 import type { SiteListItem } from "@/lib/api/types";
+import { fmt } from "@/lib/detail";
 import { hasCoordinates } from "@/lib/sites";
 
 // Continental-US default view, used until (or unless) markers set the bounds.
 const US_CENTER: [number, number] = [39.5, -98.35];
 const US_ZOOM = 4;
 
-function FitToSites({ sites }: { sites: SiteListItem[] }) {
+function FitToSites({ sites, fitSignal }: { sites: SiteListItem[]; fitSignal: number }) {
   const map = useMap();
   useEffect(() => {
+    // The rail opening or closing changes the map's width, so re-measure before
+    // fitting — otherwise the old width leaves markers behind the panel.
+    map.invalidateSize();
     const points = sites
       .filter(hasCoordinates)
       .map((s) => [s.latitude as number, s.longitude as number] as [number, number]);
@@ -27,21 +31,90 @@ function FitToSites({ sites }: { sites: SiteListItem[] }) {
       return;
     }
     map.fitBounds(latLngBounds(points), { padding: [48, 48] });
-  }, [map, sites]);
+  }, [map, sites, fitSignal]);
   return null;
+}
+
+/** The floating callout: identity, annual AC, irradiance, and the detail link. */
+function MarkerCallout({ site }: { site: SiteListItem }) {
+  const irr: Array<[string, number | null]> = [
+    ["GHI", site.annual_ghi_kwh_m2_day],
+    ["DNI", site.annual_dni_kwh_m2_day],
+    ["TILT", site.annual_latitude_tilt_kwh_m2_day],
+  ];
+  const hasIrr = irr.some(([, v]) => v !== null);
+  return (
+    <div style={{ width: 230 }}>
+      <div style={{ fontSize: 13, fontWeight: 600 }}>{site.name}</div>
+      <div className="mono" style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 3 }}>
+        {site.address}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          marginTop: 9,
+          paddingTop: 9,
+          borderTop: "1px solid var(--rule)",
+        }}
+      >
+        {site.annual_ac_kwh !== null ? (
+          <div>
+            <div className="lbl">Annual AC</div>
+            <div>
+              <span className="num" style={{ fontSize: 15 }}>
+                {fmt(site.annual_ac_kwh)}
+              </span>{" "}
+              <span className="unit">kWh</span>
+            </div>
+          </div>
+        ) : (
+          <span style={{ fontSize: 11, color: "var(--muted)" }}>No production estimate yet</span>
+        )}
+        <Link href={`/sites/${site.id}`} style={{ fontSize: 12, color: "var(--solar)", fontWeight: 500 }}>
+          Open detail →
+        </Link>
+      </div>
+      {hasIrr ? (
+        <div style={{ display: "flex", gap: 12, marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--rule)" }}>
+          {irr.map(([label, value]) =>
+            value === null ? null : (
+              <span key={label} style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span className="lbl">{label}</span>
+                <span className="num" style={{ fontSize: 11.5, color: "var(--teal-deep)" }}>
+                  {fmt(value, 2)}
+                </span>
+              </span>
+            ),
+          )}
+          <span className="unit" style={{ fontSize: 9.5 }}>
+            kWh/m²/day
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /**
  * The US map. One marker per resolved active site (these are pre-filtered by
- * the caller); unresolved/failed sites never reach here. Nothing on the map
- * triggers a provider lookup — there is no search box or geocode-on-pan.
+ * the caller); unresolved/failed sites never reach here. Clicking a marker
+ * selects it — the rail highlights and scrolls to the matching row — and opens
+ * the callout. Nothing on the map triggers a provider lookup.
  */
 export function SiteMap({
   sites,
   unmappedCount,
+  selectedId = null,
+  onSelect,
+  fitSignal = 0,
 }: {
   sites: SiteListItem[];
   unmappedCount: number;
+  selectedId?: number | null;
+  onSelect?: (id: number) => void;
+  fitSignal?: number;
 }) {
   return (
     <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
@@ -55,30 +128,28 @@ export function SiteMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {sites.map((site) => (
-          <CircleMarker
-            key={site.id}
-            center={[site.latitude as number, site.longitude as number]}
-            radius={7}
-            pathOptions={{
-              color: "#ffffff",
-              weight: 2,
-              fillColor: "#006400",
-              fillOpacity: 1,
-            }}
-          >
-            <Popup>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{site.name}</div>
-              <div className="mono" style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>
-                {site.address}
-              </div>
-              <Link href={`/sites/${site.id}`} style={{ display: "inline-block", marginTop: 6, color: "var(--solar)" }}>
-                Open detail →
-              </Link>
-            </Popup>
-          </CircleMarker>
-        ))}
-        <FitToSites sites={sites} />
+        {sites.map((site) => {
+          const selected = site.id === selectedId;
+          return (
+            <CircleMarker
+              key={site.id}
+              center={[site.latitude as number, site.longitude as number]}
+              radius={selected ? 9 : 7}
+              pathOptions={{
+                color: "#ffffff",
+                weight: selected ? 2.5 : 2,
+                fillColor: selected ? "#004d00" : "#006400",
+                fillOpacity: 1,
+              }}
+              eventHandlers={{ click: () => onSelect?.(site.id) }}
+            >
+              <Popup>
+                <MarkerCallout site={site} />
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+        <FitToSites sites={sites} fitSignal={fitSignal} />
       </MapContainer>
 
       <div

@@ -29,6 +29,8 @@ vi.mock("@/components/landing/MapPanel", () => ({
 
 const fetchSites = apiClient.fetchSites as unknown as Mock;
 
+const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
 function makeSite(overrides: Partial<SiteListItem> & { id: number }): SiteListItem {
   return {
     name: `Site ${overrides.id}`,
@@ -36,12 +38,33 @@ function makeSite(overrides: Partial<SiteListItem> & { id: number }): SiteListIt
     latitude: null,
     longitude: null,
     geocode_status: "pending",
+    solar_resource_status: "blocked",
+    annual_ghi_kwh_m2_day: null,
+    annual_dni_kwh_m2_day: null,
+    annual_latitude_tilt_kwh_m2_day: null,
+    pvwatts_status: "blocked",
+    annual_ac_kwh: null,
+    monthly_pvwatts_data: null,
     ...overrides,
   };
 }
 
+const RESULTS: Partial<SiteListItem> = {
+  solar_resource_status: "succeeded",
+  annual_ghi_kwh_m2_day: 5.65,
+  annual_dni_kwh_m2_day: 6.58,
+  annual_latitude_tilt_kwh_m2_day: 6.1,
+  pvwatts_status: "succeeded",
+  annual_ac_kwh: 179270,
+  monthly_pvwatts_data: MONTH_KEYS.map((month, i) => ({
+    month,
+    ac_kwh: 10000 + i * 100,
+    solar_radiation_kwh_m2_day: 5,
+  })),
+};
+
 const CATALOGUE: SiteListItem[] = [
-  makeSite({ id: 1, name: "Desert Bloom Solar", geocode_status: "resolved", latitude: 33.43, longitude: -112.12 }),
+  makeSite({ id: 1, name: "Desert Bloom Solar", geocode_status: "resolved", latitude: 33.43, longitude: -112.12, ...RESULTS }),
   makeSite({ id: 2, name: "Front Range PV Yard", geocode_status: "resolved", latitude: 40.02, longitude: -105.25 }),
   makeSite({ id: 3, name: "Piedmont Pending Site", geocode_status: "pending" }),
   makeSite({ id: 4, name: "Nowhere Ranch", geocode_status: "unresolved" }),
@@ -79,10 +102,56 @@ describe("LandingView", () => {
     expect(screen.getByText("Timeout Flats")).toBeInTheDocument();
 
     // Statuses are communicated by word, and "unresolved" reads as "no match found".
-    expect(screen.getAllByText("resolved").length).toBeGreaterThanOrEqual(2);
+    // A resolved row with results shows its production instead of the status word.
+    expect(screen.getAllByText("resolved").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("pending")).toBeInTheDocument();
     expect(screen.getByText("no match found")).toBeInTheDocument();
     expect(screen.getByText("failed")).toBeInTheDocument();
+  });
+
+  it("shows annual production on a row with results and irradiance on demand", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    render(<LandingView />);
+
+    const row = (await screen.findByText("Desert Bloom Solar")).closest("a")!;
+    expect(within(row).getByText("179,270")).toBeInTheDocument();
+    expect(within(row).getByText("kWh/yr")).toBeInTheDocument();
+    // The irradiance line exists in the row, revealed on hover/focus/selection.
+    expect(within(row).getByText("GHI")).toBeInTheDocument();
+    expect(within(row).getByText("5.65")).toBeInTheDocument();
+    expect(within(row).getByText("kWh/m²/day")).toBeInTheDocument();
+  });
+
+  it("marks a resolved row with missing results with a caution note", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    render(<LandingView />);
+
+    const row = (await screen.findByText("Front Range PV Yard")).closest("a")!;
+    // The note appears as the glyph's accessible title and the mono note line.
+    expect(within(row).getAllByText(/solar results missing/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("collapses the rail to a spine and expands it again", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    render(<LandingView />);
+    await screen.findByText("Desert Bloom Solar");
+
+    await userEvent.click(screen.getByRole("button", { name: /collapse the site list/i }));
+    expect(screen.queryByText("Desert Bloom Solar")).not.toBeInTheDocument();
+    expect(screen.getByText(/sites/i, { selector: "aside div" })).toHaveTextContent("5");
+
+    await userEvent.click(screen.getByRole("button", { name: /show the site list/i }));
+    expect(screen.getByText("Desert Bloom Solar")).toBeInTheDocument();
+  });
+
+  it("keeps the Not on the map group visible even when every site is mapped", async () => {
+    fetchSites.mockResolvedValue([CATALOGUE[0], CATALOGUE[1]]);
+    render(<LandingView />);
+    await screen.findByText("Desert Bloom Solar");
+
+    const toggle = screen.getByRole("button", { name: /not on the map/i });
+    expect(toggle).toBeDisabled();
+    expect(screen.getByText(/every active site has coordinates/)).toBeInTheDocument();
   });
 
   it("passes only resolved sites with coordinates to the map", async () => {

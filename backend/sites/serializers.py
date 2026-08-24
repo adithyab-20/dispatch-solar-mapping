@@ -4,6 +4,14 @@ from sites.models import Site
 
 
 class SiteListSerializer(serializers.ModelSerializer[Site]):
+    """One catalogue row.
+
+    Besides map identity, the landing rail shows each resolved site's annual AC
+    production with a monthly sparkline and, on hover, the three annual
+    irradiance averages — so the list carries those stored results too. Stage
+    statuses let the rail mark a resolved site whose results are missing.
+    """
+
     class Meta:
         model = Site
         fields = (
@@ -13,6 +21,13 @@ class SiteListSerializer(serializers.ModelSerializer[Site]):
             "latitude",
             "longitude",
             "geocode_status",
+            "solar_resource_status",
+            "annual_ghi_kwh_m2_day",
+            "annual_dni_kwh_m2_day",
+            "annual_latitude_tilt_kwh_m2_day",
+            "pvwatts_status",
+            "annual_ac_kwh",
+            "monthly_pvwatts_data",
         )
         read_only_fields = fields
 

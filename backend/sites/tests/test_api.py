@@ -11,6 +11,14 @@ from sites.services.pvwatts import PVWATTS_BASE_ASSUMPTIONS
 @pytest.mark.django_db
 def test_list_returns_only_active_sites_with_map_identity() -> None:
     attempted_at = datetime(2026, 8, 23, 12, 30, tzinfo=timezone.utc)
+    pvwatts_months = [
+        {
+            "month": month,
+            "ac_kwh": 8200.4 + index,
+            "solar_radiation_kwh_m2_day": 4.1 + index,
+        }
+        for index, month in enumerate(MONTHS)
+    ]
     resolved = Site.objects.create(
         name="Chicago Solar",
         address="200 W Washington St",
@@ -18,6 +26,15 @@ def test_list_returns_only_active_sites_with_map_identity() -> None:
         geocode_attempted_at=attempted_at,
         latitude=41.8837,
         longitude=-87.6325,
+        solar_resource_status=ProcessingStatus.SUCCEEDED,
+        annual_ghi_kwh_m2_day=4.12,
+        annual_dni_kwh_m2_day=5.23,
+        annual_latitude_tilt_kwh_m2_day=4.88,
+        solar_resource_attempted_at=attempted_at,
+        pvwatts_status=ProcessingStatus.SUCCEEDED,
+        annual_ac_kwh=140_234.5,
+        monthly_pvwatts_data=pvwatts_months,
+        pvwatts_attempted_at=attempted_at,
     )
     unresolved = Site.objects.create(
         name="Unknown Solar",
@@ -41,6 +58,15 @@ def test_list_returns_only_active_sites_with_map_identity() -> None:
     response = APIClient().get("/api/sites/")
 
     assert response.status_code == 200
+    no_results = {
+        "solar_resource_status": "blocked",
+        "annual_ghi_kwh_m2_day": None,
+        "annual_dni_kwh_m2_day": None,
+        "annual_latitude_tilt_kwh_m2_day": None,
+        "pvwatts_status": "blocked",
+        "annual_ac_kwh": None,
+        "monthly_pvwatts_data": None,
+    }
     assert response.json() == [
         {
             "id": resolved.id,
@@ -49,6 +75,13 @@ def test_list_returns_only_active_sites_with_map_identity() -> None:
             "latitude": 41.8837,
             "longitude": -87.6325,
             "geocode_status": "resolved",
+            "solar_resource_status": "succeeded",
+            "annual_ghi_kwh_m2_day": 4.12,
+            "annual_dni_kwh_m2_day": 5.23,
+            "annual_latitude_tilt_kwh_m2_day": 4.88,
+            "pvwatts_status": "succeeded",
+            "annual_ac_kwh": 140_234.5,
+            "monthly_pvwatts_data": pvwatts_months,
         },
         {
             "id": unresolved.id,
@@ -57,6 +90,7 @@ def test_list_returns_only_active_sites_with_map_identity() -> None:
             "latitude": None,
             "longitude": None,
             "geocode_status": "unresolved",
+            **no_results,
         },
         {
             "id": failed.id,
@@ -65,6 +99,7 @@ def test_list_returns_only_active_sites_with_map_identity() -> None:
             "latitude": None,
             "longitude": None,
             "geocode_status": "failed",
+            **no_results,
         },
     ]
 

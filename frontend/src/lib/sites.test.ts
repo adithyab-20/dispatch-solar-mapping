@@ -5,6 +5,8 @@ import {
   geocodeStatusMeta,
   hasCoordinates,
   isMappable,
+  missingResultNote,
+  monthlyAcSeries,
   partitionSites,
   unmappedSummary,
 } from "@/lib/sites";
@@ -17,6 +19,13 @@ function site(overrides: Partial<SiteListItem>): SiteListItem {
     latitude: null,
     longitude: null,
     geocode_status: "pending",
+    solar_resource_status: "blocked",
+    annual_ghi_kwh_m2_day: null,
+    annual_dni_kwh_m2_day: null,
+    annual_latitude_tilt_kwh_m2_day: null,
+    pvwatts_status: "blocked",
+    annual_ac_kwh: null,
+    monthly_pvwatts_data: null,
     ...overrides,
   };
 }
@@ -84,6 +93,60 @@ describe("geocodeStatusMeta", () => {
     expect(geocodeStatusMeta("resolved")).toMatchObject({ word: "resolved", shape: "disc" });
     expect(geocodeStatusMeta("pending")).toMatchObject({ word: "pending", shape: "arc" });
     expect(geocodeStatusMeta("failed")).toMatchObject({ word: "failed", shape: "cross", tone: "fail" });
+  });
+});
+
+function monthly(values: number[]) {
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  return values.map((v, i) => ({
+    month: months[i],
+    ac_kwh: v,
+    solar_radiation_kwh_m2_day: 5,
+  }));
+}
+
+describe("monthlyAcSeries", () => {
+  it("returns the twelve AC values in canonical month order", () => {
+    const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const entries = monthly(values);
+    // Shuffle the stored order; the series must come back canonical.
+    const shuffled = [...entries].reverse();
+    expect(monthlyAcSeries(site({ monthly_pvwatts_data: shuffled }))).toEqual(values);
+  });
+
+  it("returns null when the series is missing or incomplete", () => {
+    expect(monthlyAcSeries(site({ monthly_pvwatts_data: null }))).toBeNull();
+    expect(monthlyAcSeries(site({ monthly_pvwatts_data: monthly([1, 2, 3]).slice(0, 3) }))).toBeNull();
+  });
+});
+
+describe("missingResultNote", () => {
+  const resolved = { geocode_status: "resolved", latitude: 40, longitude: -105 } as const;
+
+  it("is null while both result stages succeeded", () => {
+    expect(
+      missingResultNote(
+        site({ ...resolved, solar_resource_status: "succeeded", pvwatts_status: "succeeded" }),
+      ),
+    ).toBeNull();
+  });
+
+  it("names the stage whose result is missing", () => {
+    expect(
+      missingResultNote(
+        site({ ...resolved, solar_resource_status: "failed", pvwatts_status: "succeeded" }),
+      ),
+    ).toBe("solar resource missing");
+    expect(
+      missingResultNote(
+        site({ ...resolved, solar_resource_status: "succeeded", pvwatts_status: "pending" }),
+      ),
+    ).toBe("production estimate missing");
+    expect(
+      missingResultNote(
+        site({ ...resolved, solar_resource_status: "failed", pvwatts_status: "failed" }),
+      ),
+    ).toBe("solar results missing");
   });
 });
 

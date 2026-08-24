@@ -18,5 +18,9 @@
   {
     "name": "Seattle Sample Site",
     "address": "700 5th Avenue, Seattle, WA 98104"
+  },
+  {
+    "name": "Unmappable Sample Site",
+    "address": "9999 Nonexistent Boulevard, Nowhereville, ZZ 00000"
   }
 ]

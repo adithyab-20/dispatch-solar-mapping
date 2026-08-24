@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppBar } from "@/components/AppBar";
 import { CatalogRail } from "@/components/landing/CatalogRail";
 import { MapPanel } from "@/components/landing/MapPanel";
+import { RailSpine } from "@/components/landing/RailSpine";
 import { EmptyState, ErrorState, LoadingState } from "@/components/landing/states";
 import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
@@ -22,6 +23,11 @@ type View =
  */
 export function LandingView() {
   const [view, setView] = useState<View>({ phase: "loading" });
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  // Bumped whenever the rail opens or closes so the map re-measures itself and
+  // re-fits its bounds — a west-coast marker is never left behind the panel.
+  const [fitSignal, setFitSignal] = useState(0);
 
   const load = useCallback(async () => {
     setView({ phase: "loading" });
@@ -38,15 +44,28 @@ export function LandingView() {
     void load();
   }, [load]);
 
+  const toggleRail = useCallback(() => {
+    setCollapsed((value) => !value);
+    setFitSignal((n) => n + 1);
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar apiOrigin={apiOrigin()} />
-      {renderBody(view, load)}
+      {renderBody(view, load, { selectedId, onSelect: setSelectedId, collapsed, toggleRail, fitSignal })}
     </div>
   );
 }
 
-function renderBody(view: View, retry: () => void) {
+interface RailState {
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+  collapsed: boolean;
+  toggleRail: () => void;
+  fitSignal: number;
+}
+
+function renderBody(view: View, retry: () => void, rail: RailState) {
   if (view.phase === "loading") {
     return (
       <div className="landing-split">
@@ -72,9 +91,19 @@ function renderBody(view: View, retry: () => void) {
   const { mapped, unmapped } = partitionSites(view.sites);
   return (
     <div className="landing-split">
-      <CatalogRail sites={view.sites} />
+      {rail.collapsed ? (
+        <RailSpine sites={view.sites} selectedId={rail.selectedId} onExpand={rail.toggleRail} />
+      ) : (
+        <CatalogRail sites={view.sites} selectedId={rail.selectedId} onCollapse={rail.toggleRail} />
+      )}
       <div className="map-panel">
-        <MapPanel sites={mapped} unmappedCount={unmapped.length} />
+        <MapPanel
+          sites={mapped}
+          unmappedCount={unmapped.length}
+          selectedId={rail.selectedId}
+          onSelect={rail.onSelect}
+          fitSignal={rail.fitSignal}
+        />
       </div>
     </div>
   );

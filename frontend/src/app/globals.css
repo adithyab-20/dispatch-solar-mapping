@@ -236,6 +236,47 @@ button:focus-visible {
   }
 }
 
+/* Catalogue row: the irradiance line stays hidden until the row is hovered,
+   focused, or selected (UI brief §3); the selected row keeps it open and is
+   marked by a left rule + tint, never colour alone. */
+.site-row {
+  display: block;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 0 solid transparent;
+  color: inherit;
+}
+
+.site-row:hover,
+.site-row:focus-visible {
+  border-left-width: 4px;
+  border-left-color: var(--rule-strong);
+  padding-left: 14px;
+  background: var(--panel-2);
+}
+
+.site-row.is-selected {
+  border-left-width: 4px;
+  border-left-color: var(--solar);
+  padding-left: 14px;
+  background: var(--solar-wash);
+}
+
+.site-row .row-irr {
+  display: none;
+}
+
+.site-row:hover .row-irr,
+.site-row:focus-visible .row-irr,
+.site-row.is-selected .row-irr {
+  display: flex;
+}
+
+/* Collapsed rail: a 56px spine with the count and a status-dot summary. */
+.catalog-rail.is-collapsed {
+  width: 56px;
+}
+
 /* Site detail page: a single vertical stack that scrolls under the app bar. */
 .detail-main {
   flex: 1;

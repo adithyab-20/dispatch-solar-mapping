@@ -1,4 +1,5 @@
 import type { GeocodeStatus, SiteListItem } from "@/lib/api/types";
+import { orderMonthly } from "@/lib/detail";
 
 /** The four ways a geocoding indicator can be drawn (shape, never colour alone). */
 export type MarkerShape = "disc" | "arc" | "dashed-ring" | "cross";
@@ -58,6 +59,31 @@ const SUMMARY_PARTS: ReadonlyArray<[GeocodeStatus, string]> = [
   ["unresolved", "no match"],
   ["failed", "failed"],
 ];
+
+/**
+ * The twelve monthly AC production values in canonical month order, for the
+ * rail sparkline — or null unless a complete series is stored. An incomplete
+ * series is never padded or interpolated.
+ */
+export function monthlyAcSeries(site: SiteListItem): number[] | null {
+  const ordered = orderMonthly(site.monthly_pvwatts_data);
+  if (ordered.length !== 12) return null;
+  return ordered.map((entry) => entry.ac_kwh);
+}
+
+/**
+ * The caution note for a mapped row whose result stages have not all succeeded
+ * (UI brief §3): the site keeps its marker because it has coordinates, but the
+ * missing result is named rather than silently absent. Null when all is well.
+ */
+export function missingResultNote(site: SiteListItem): string | null {
+  const solarMissing = site.solar_resource_status !== "succeeded";
+  const pvwattsMissing = site.pvwatts_status !== "succeeded";
+  if (solarMissing && pvwattsMissing) return "solar results missing";
+  if (solarMissing) return "solar resource missing";
+  if (pvwattsMissing) return "production estimate missing";
+  return null;
+}
 
 /** e.g. "1 pending · 2 no match · 1 failed"; empty categories are omitted. */
 export function unmappedSummary(unmapped: SiteListItem[]): string {
