@@ -2,7 +2,7 @@
 
 A local Django and React application for mapping U.S. solar sites and showing
 their Solar Resource and PVWatts results. The current backend includes the Site
-domain, its read-only API, and an idempotent site-import workflow with
+domain, its active-site API, and an idempotent site-import workflow with
 geocoding, Solar Resource retrieval, and PVWatts V8 estimates; the frontend is
 added in a later slice.
 
@@ -26,9 +26,17 @@ The backend then exposes:
   and geocoding status.
 - `GET http://127.0.0.1:8000/api/sites/<id>/` - the complete stored state for
   one active site.
+- `PATCH http://127.0.0.1:8000/api/sites/<id>/` - edit a site's display name,
+  address, or both; meaningful address changes re-run the full workflow.
+- `POST http://127.0.0.1:8000/api/sites/<id>/geocode/` - clear location and
+  dependent results, then re-run the complete workflow.
+- `POST http://127.0.0.1:8000/api/sites/<id>/solar-resource/` - clear and retry
+  only Solar Resource for a site with resolved coordinates.
+- `POST http://127.0.0.1:8000/api/sites/<id>/pvwatts/` - clear and retry only
+  PVWatts for a site with resolved coordinates.
 
-Both endpoints are read-only. Inactive records are excluded from the list and
-return `404` by ID. The only allowed browser origins are
+Inactive records are excluded from the list and every ID-based API operation
+returns `404` for them. The only allowed browser origins are
 `http://localhost:3000` and `http://127.0.0.1:3000`; cross-origin credentials
 and allow-all CORS are disabled.
 

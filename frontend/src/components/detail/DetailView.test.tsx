@@ -13,11 +13,22 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api/client")>();
   return {
     ...actual,
-    apiClient: { fetchSites: vi.fn(), fetchSite: vi.fn() },
+    apiClient: {
+      fetchSites: vi.fn(),
+      fetchSite: vi.fn(),
+      updateSite: vi.fn(),
+      refreshGeocoding: vi.fn(),
+      refreshSolarResource: vi.fn(),
+      refreshPvwatts: vi.fn(),
+    },
   };
 });
 
 const fetchSite = apiClient.fetchSite as unknown as Mock;
+const updateSite = apiClient.updateSite as unknown as Mock;
+const refreshGeocoding = apiClient.refreshGeocoding as unknown as Mock;
+const refreshSolarResource = apiClient.refreshSolarResource as unknown as Mock;
+const refreshPvwatts = apiClient.refreshPvwatts as unknown as Mock;
 
 // Monthly production peaking in August, so "Best month" resolves to Aug.
 const AC = [10350, 11860, 14510, 15830, 16780, 16940, 17690, 18260, 17420, 15880, 12510, 11240];
@@ -90,6 +101,10 @@ function makeDetail(overrides: Partial<SiteDetail> = {}): SiteDetail {
 
 beforeEach(() => {
   fetchSite.mockReset();
+  updateSite.mockReset();
+  refreshGeocoding.mockReset();
+  refreshSolarResource.mockReset();
+  refreshPvwatts.mockReset();
 });
 
 afterEach(() => {
@@ -296,6 +311,185 @@ describe("DetailView — honest states", () => {
   });
 });
 
+describe("DetailView — editing and focused retries", () => {
+  it("keeps an unchanged edit disabled, then saves only the changed name", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    updateSite.mockResolvedValue(makeDetail({ name: "Desert Bloom Energy" }));
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit name or address" }));
+    const dialog = screen.getByRole("dialog", { name: "Edit site" });
+    expect(within(dialog).getByRole("button", { name: "Save changes" })).toBeDisabled();
+    await userEvent.clear(within(dialog).getByLabelText("Display name"));
+    await userEvent.type(within(dialog).getByLabelText("Display name"), "Desert Bloom Energy");
+    expect(within(dialog).getByText(/Name only · keeps results/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+
+    expect(updateSite).toHaveBeenCalledWith(1, { name: "Desert Bloom Energy" });
+    expect(await screen.findByRole("heading", { name: "Desert Bloom Energy" })).toBeInTheDocument();
+    expect(screen.getByText(/Site changes saved/)).toBeInTheDocument();
+  });
+
+  it("warns before an address save and restores keyboard focus when dismissed", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+
+    const trigger = screen.getByRole("button", { name: "Edit name or address" });
+    trigger.focus();
+    await userEvent.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Edit site" });
+    expect(within(dialog).getByRole("button", { name: "Close edit panel" })).toHaveFocus();
+
+    await userEvent.clear(within(dialog).getByLabelText("Address"));
+    await userEvent.type(within(dialog).getByLabelText("Address"), "500 New Solar Way");
+    expect(within(dialog).getByText(/Address changed · may clear results/)).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Save and reprocess" })).toBeEnabled();
+
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Edit site" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("lists deterministic validation errors without closing the edit panel", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    updateSite.mockRejectedValue(
+      new ApiError("http", 400, {
+        detail: "The PATCH payload is invalid.",
+        errors: {
+          unsupported_fields: ["latitude"],
+          address: ["Must be a non-empty string."],
+        },
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit name or address" }));
+    const dialog = screen.getByRole("dialog", { name: "Edit site" });
+    await userEvent.clear(within(dialog).getByLabelText("Address"));
+    await userEvent.type(within(dialog).getByLabelText("Address"), "---");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save and reprocess" }));
+
+    expect(await within(dialog).findByText(/unsupported fields: latitude/i)).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/Must be a non-empty string/).length).toBeGreaterThanOrEqual(1);
+    expect(within(dialog).getByText(/Nothing was written and no lookup ran/)).toBeInTheDocument();
+  });
+
+  it("explains an active conflict and links to the conflicting site", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    updateSite.mockRejectedValue(
+      new ApiError("http", 409, {
+        detail: "An active site with that name and address pair already exists.",
+        conflict_site_id: 42,
+        conflict_is_active: true,
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit name or address" }));
+    const dialog = screen.getByRole("dialog", { name: "Edit site" });
+    await userEvent.type(within(dialog).getByLabelText("Display name"), " II");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+
+    expect((await within(dialog).findAllByText(/pair already exists/)).length).toBeGreaterThanOrEqual(1);
+    expect(within(dialog).getByRole("link", { name: /Open site #42/ })).toHaveAttribute("href", "/sites/42");
+  });
+
+  it("requires confirmation before destructive geocoding refresh and renders the outcome", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    refreshGeocoding.mockResolvedValue(
+      makeDetail({
+        geocode_status: "unresolved",
+        latitude: null,
+        longitude: null,
+        resolved_address: null,
+        solar_resource_status: "blocked",
+        monthly_solar_data: null,
+        pvwatts_status: "blocked",
+        monthly_pvwatts_data: null,
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+    await userEvent.click(screen.getByRole("button", { name: "Refresh geocoding…" }));
+    expect(refreshGeocoding).not.toHaveBeenCalled();
+    const confirmation = screen.getByRole("alertdialog");
+    expect(within(confirmation).getByText(/old values are not restored/)).toBeInTheDocument();
+    await userEvent.click(within(confirmation).getByRole("button", { name: "Clear and refresh" }));
+
+    await waitFor(() => expect(refreshGeocoding).toHaveBeenCalledWith(1));
+    const feedback = await screen.findByText(/Geocoding retried — no match found/);
+    expect(feedback.closest(".inline-feedback")).toHaveClass("feedback-warn");
+    expect(screen.getAllByText("no match found").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("retries only Solar Resource and announces the returned failure", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    refreshSolarResource.mockResolvedValue(
+      makeDetail({
+        solar_resource_status: "failed",
+        solar_resource_error: "Solar Resource service returned HTTP 503",
+        monthly_solar_data: null,
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+    await userEvent.click(screen.getByRole("button", { name: /processing stages/i }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Retry solar resource" }));
+
+    await waitFor(() => expect(refreshSolarResource).toHaveBeenCalledWith(1));
+    expect(await screen.findByText(/Solar resource retried — failed/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Solar Resource service returned HTTP 503/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("179,270").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("disables both downstream retry controls without resolved coordinates", async () => {
+    fetchSite.mockResolvedValue(
+      makeDetail({
+        geocode_status: "failed",
+        latitude: null,
+        longitude: null,
+        solar_resource_status: "blocked",
+        pvwatts_status: "blocked",
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+
+    expect(screen.getByRole("button", { name: "Retry solar resource" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Retry PVWatts" })).toBeDisabled();
+    expect(screen.getAllByText(/Needs resolved coordinates before retrying/)).toHaveLength(2);
+    expect(refreshPvwatts).not.toHaveBeenCalled();
+  });
+
+  it("prevents repeat PVWatts submissions and renders the returned success", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    let resolveRefresh: ((site: SiteDetail) => void) | undefined;
+    refreshPvwatts.mockReturnValue(
+      new Promise<SiteDetail>((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    render(<DetailView siteId={1} />);
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+    await userEvent.click(screen.getByRole("button", { name: /processing stages/i }));
+
+    const retry = screen.getByRole("button", { name: "Retry PVWatts" });
+    await userEvent.click(retry);
+    expect(screen.getByRole("button", { name: "Retrying…" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Retrying…" }));
+    expect(refreshPvwatts).toHaveBeenCalledTimes(1);
+
+    resolveRefresh?.(makeDetail({ annual_ac_kwh: 180_000 }));
+    expect(await screen.findByText(/PVWatts retried — succeeded/)).toBeInTheDocument();
+    expect(screen.getAllByText("180,000").length).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe("DetailView — loading, error, and not-found", () => {
   it("shows a loading state before the record resolves", () => {
     fetchSite.mockReturnValue(new Promise(() => {}));
@@ -310,6 +504,8 @@ describe("DetailView — loading, error, and not-found", () => {
     render(<DetailView siteId={999} />);
     expect(await screen.findByText(/site not found/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /back to all sites/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit name or address" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Refresh geocoding…" })).not.toBeInTheDocument();
   });
 
   it("shows not-found for a non-numeric id without calling the API", () => {

@@ -88,3 +88,51 @@ describe("apiClient.fetchSites", () => {
     await expect(apiClient.fetchSites()).rejects.toMatchObject({ kind: "parse" });
   });
 });
+
+describe("apiClient site mutations", () => {
+  it("sends PATCH edits as JSON and returns the complete detail", async () => {
+    const detail = { id: 3, name: "Renamed" };
+    const fetchMock = mockFetchOnce({ json: async () => detail });
+
+    const result = await apiClient.updateSite(3, { name: "Renamed" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/sites/3/",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ name: "Renamed" }),
+        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+      }),
+    );
+    expect(result).toEqual(detail);
+  });
+
+  it.each([
+    ["refreshGeocoding", "/sites/4/geocode/"],
+    ["refreshSolarResource", "/sites/4/solar-resource/"],
+    ["refreshPvwatts", "/sites/4/pvwatts/"],
+  ] as const)("posts %s to its focused endpoint", async (method, path) => {
+    const fetchMock = mockFetchOnce({ json: async () => ({ id: 4 }) });
+
+    await apiClient[method](4);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://127.0.0.1:8000/api${path}`,
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("keeps a structured validation payload on HTTP errors", async () => {
+    const payload = {
+      detail: "The PATCH payload is invalid.",
+      errors: { address: ["Must be a non-empty string."] },
+    };
+    mockFetchOnce({ ok: false, status: 400, json: async () => payload });
+
+    await expect(apiClient.updateSite(1, { address: "---" })).rejects.toMatchObject({
+      kind: "http",
+      status: 400,
+      payload,
+    });
+  });
+});

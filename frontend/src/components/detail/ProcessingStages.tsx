@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { SiteDetail } from "@/lib/api/types";
 import {
@@ -13,6 +13,7 @@ import {
 import { StatusChip } from "@/components/detail/StatusChip";
 
 interface StageModel {
+  key: "geocode" | "solar" | "pvwatts";
   name: string;
   chip: ChipMeta;
   attemptedAt: string | null;
@@ -40,6 +41,7 @@ function stageModels(site: SiteDetail): StageModel[] {
 
   return [
     {
+      key: "geocode",
       name: "Geocoding",
       chip: geocodeChip(site.geocode_status),
       attemptedAt: site.geocode_attempted_at,
@@ -47,6 +49,7 @@ function stageModels(site: SiteDetail): StageModel[] {
       error: site.geocode_error,
     },
     {
+      key: "solar",
       name: "Solar resource",
       chip: processingChip(site.solar_resource_status),
       attemptedAt: site.solar_resource_attempted_at,
@@ -57,6 +60,7 @@ function stageModels(site: SiteDetail): StageModel[] {
       error: site.solar_resource_error,
     },
     {
+      key: "pvwatts",
       name: "PVWatts",
       chip: processingChip(site.pvwatts_status),
       attemptedAt: site.pvwatts_attempted_at,
@@ -87,8 +91,31 @@ function StageError({ text }: { text: string }) {
   );
 }
 
-function StageCard({ stage }: { stage: StageModel }) {
+type BusyAction = "edit" | StageModel["key"] | null;
+
+interface StageActions {
+  busy: BusyAction;
+  canRetryDownstream: boolean;
+  onRefreshGeocoding: () => void;
+  onRetrySolarResource: () => void;
+  onRetryPvwatts: () => void;
+}
+
+function StageCard({ stage, actions }: { stage: StageModel; actions: StageActions }) {
   const ts = formatTimestamp(stage.attemptedAt);
+  const isBusy = actions.busy === stage.key;
+  const anyBusy = actions.busy !== null;
+  const downstreamBlocked = stage.key !== "geocode" && !actions.canRetryDownstream;
+  const label = {
+    geocode: isBusy ? "Refreshing…" : "Refresh geocoding…",
+    solar: isBusy ? "Retrying…" : "Retry solar resource",
+    pvwatts: isBusy ? "Retrying…" : "Retry PVWatts",
+  }[stage.key];
+  const run = {
+    geocode: actions.onRefreshGeocoding,
+    solar: actions.onRetrySolarResource,
+    pvwatts: actions.onRetryPvwatts,
+  }[stage.key];
   return (
     <div
       className="panel"
@@ -103,6 +130,17 @@ function StageCard({ stage }: { stage: StageModel }) {
       </div>
       <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{stage.line}</div>
       {stage.error && <StageError text={stage.error} />}
+      {stage.chip.word === "pending" && (
+        <div className="stale-note">Previous values were cleared before this attempt.</div>
+      )}
+      <div style={{ marginTop: "auto", paddingTop: 2 }}>
+        <button className="btn stage-action" type="button" onClick={run} disabled={anyBusy || downstreamBlocked}>
+          {label}
+        </button>
+        {downstreamBlocked && (
+          <div className="mono stage-disabled-reason">Needs resolved coordinates before retrying.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -125,10 +163,14 @@ const chevron = (open: boolean) => (
  * all three stages succeeded, and opened by default the moment one is anything
  * else. Either way the reader can toggle it.
  */
-export function ProcessingStages({ site }: { site: SiteDetail }) {
+export function ProcessingStages({ site, actions }: { site: SiteDetail; actions: StageActions }) {
   const autoOpen = shouldAutoOpenStages(site);
   const [open, setOpen] = useState(autoOpen);
   const stages = stageModels(site);
+
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen, site.updated_at]);
 
   const lastRun = formatTimestamp(
     [site.geocode_attempted_at, site.solar_resource_attempted_at, site.pvwatts_attempted_at]
@@ -226,7 +268,7 @@ export function ProcessingStages({ site }: { site: SiteDetail }) {
         }}
       >
         {stages.map((stage) => (
-          <StageCard key={stage.name} stage={stage} />
+          <StageCard key={stage.name} stage={stage} actions={actions} />
         ))}
       </div>
     </div>

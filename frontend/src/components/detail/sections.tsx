@@ -29,18 +29,38 @@ function SectionTitle({ title, note, color }: { title: string; note?: string; co
   );
 }
 
-/** Header: back link, display name, and a `Site #N · active` sublabel. */
-export function DetailHeader({ site }: { site: SiteDetail }) {
+/** Header: identity plus the two approved site-level actions. */
+export function DetailHeader({
+  site,
+  onEdit,
+  onRefreshGeocoding,
+  disabled,
+}: {
+  site: SiteDetail;
+  onEdit: () => void;
+  onRefreshGeocoding: () => void;
+  disabled: boolean;
+}) {
   return (
     <div style={{ padding: "18px 24px 16px", background: "var(--panel)", borderBottom: "1px solid var(--rule)" }}>
       <TransitionLink href="/" direction="back" style={{ fontSize: 12, color: "var(--muted)" }}>
         ← All sites
       </TransitionLink>
-      <div style={{ marginTop: 8 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-.01em" }}>{site.name}</h1>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
-          {/* Only active sites ever reach this view (DetailView 404s the rest). */}
-          Site #{site.id} · active
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginTop: 8 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-.01em" }}>{site.name}</h1>
+          <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+            {/* Only active sites ever reach this view (DetailView 404s the rest). */}
+            Site #{site.id} · active
+          </div>
+        </div>
+        <div className="detail-header-actions">
+          <button className="btn" type="button" onClick={onEdit} disabled={disabled}>
+            Edit name or address
+          </button>
+          <button className="btn btn-danger" type="button" onClick={onRefreshGeocoding} disabled={disabled}>
+            Refresh geocoding…
+          </button>
         </div>
       </div>
     </div>
