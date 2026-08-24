@@ -1,7 +1,13 @@
 import pytest
+from pytest_django.fixtures import Settings
 
 from sites.services import geocoding
 from sites.services.geocoding import NominatimGateway
+
+
+@pytest.fixture(autouse=True)
+def missing_nlr_api_key(settings: Settings) -> None:
+    settings.NLR_API_KEY = ""
 
 
 @pytest.fixture

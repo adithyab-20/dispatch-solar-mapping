@@ -69,7 +69,9 @@ def test_import_resolves_a_new_site_after_reconciliation_commits(
     assert site.resolved_address == "121 North LaSalle Street, Chicago, Illinois"
     assert site.geocode_error is None
     assert site.geocode_attempted_at is not None
-    assert site.solar_resource_status == ProcessingStatus.BLOCKED
+    assert site.solar_resource_status == ProcessingStatus.FAILED
+    assert site.solar_resource_error == "NLR_API_KEY not configured"
+    assert site.solar_resource_attempted_at is not None
     assert site.pvwatts_status == ProcessingStatus.BLOCKED
     http_get.assert_called_once_with(
         "https://nominatim.openstreetmap.org/search",

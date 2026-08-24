@@ -2,8 +2,9 @@
 
 A local Django and React application for mapping U.S. solar sites and showing
 their Solar Resource and PVWatts results. The current backend includes the Site
-domain, its read-only API, and an idempotent site-import workflow; provider
-workflows beyond geocoding and the frontend are added in later slices.
+domain, its read-only API, and an idempotent site-import workflow with
+geocoding and Solar Resource retrieval; PVWatts and the frontend are added in
+later slices.
 
 ## Backend quickstart
 
@@ -51,12 +52,15 @@ same-name/different-address or same-address/different-name ambiguities are
 reported without preventing other valid rows from being accepted.
 
 After the complete upsert is committed, new records are geocoded sequentially
-through Nominatim while both downstream stages remain `blocked`. The command
-stores resolved coordinates, a clear unresolved outcome, or a safe provider
-failure. Byte-identical addresses share one handled geocoding result during a
-single command run; formatting variants remain separate requests, and the
-cache is discarded when the command exits. Repeating an unchanged import makes
-no provider request.
+through Nominatim. Each resolved site then retrieves Solar Resource V1 data
+from NLR using its coordinates; unresolved and geocoding-failed sites leave
+downstream work `blocked`. Each provider stage commits its pending state before
+I/O and stores either canonical results or a safe, stage-specific failure.
+Byte-identical addresses share one handled geocoding result during a single
+command run, while every resolved record makes its own Solar Resource request.
+Formatting variants remain separate geocoding requests, the cache is discarded
+when the command exits, and repeating an unchanged import makes no provider
+request.
 
 The public Nominatim service is appropriate here only for this small local
 assessment. The importer sends a custom User-Agent, serializes requests, spaces
@@ -86,5 +90,6 @@ enabled with `--disable-socket` in the checked-in pytest configuration.
 `.env`; `python-dotenv` loads that repository-root file without overriding
 variables already present in the environment. `CONTACT_EMAIL` is included in
 the Nominatim User-Agent when present; otherwise the importer logs a warning
-and still sends a descriptive application User-Agent. The NLR key is used by
-later provider stages.
+and still sends a descriptive application User-Agent. `NLR_API_KEY` is required
+for Solar Resource retrieval; when it is absent, resolved sites retain a safe
+stage-specific configuration failure without making an NLR request.
