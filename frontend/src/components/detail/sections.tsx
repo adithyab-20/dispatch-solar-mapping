@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { TransitionLink } from "@/components/TransitionLink";
 import type { ProcessingStatus, SiteDetail } from "@/lib/api/types";
 import {
   fmt,
@@ -34,9 +33,9 @@ function SectionTitle({ title, note, color }: { title: string; note?: string; co
 export function DetailHeader({ site }: { site: SiteDetail }) {
   return (
     <div style={{ padding: "18px 24px 16px", background: "var(--panel)", borderBottom: "1px solid var(--rule)" }}>
-      <Link href="/" style={{ fontSize: 12, color: "var(--muted)" }}>
+      <TransitionLink href="/" direction="back" style={{ fontSize: 12, color: "var(--muted)" }}>
         ← All sites
-      </Link>
+      </TransitionLink>
       <div style={{ marginTop: 8 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-.01em" }}>{site.name}</h1>
         <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>

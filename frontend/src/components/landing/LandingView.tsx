@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { AppBar } from "@/components/AppBar";
 import { CatalogRail } from "@/components/landing/CatalogRail";
@@ -10,6 +11,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/landing/state
 import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites } from "@/lib/sites";
+import { startPageTransition } from "@/lib/page-transition";
 
 type View =
   | { phase: "loading" }
@@ -22,12 +24,13 @@ type View =
  * Rendering never triggers a provider request — only this one read call runs.
  */
 export function LandingView() {
+  const router = useRouter();
   const [view, setView] = useState<View>({ phase: "loading" });
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  // Bumped whenever the rail opens or closes so the map re-measures itself and
-  // re-fits its bounds — a west-coast marker is never left behind the panel.
-  const [fitSignal, setFitSignal] = useState(0);
+  // Bumped whenever the rail opens or closes so Leaflet re-measures its canvas
+  // without changing the user's zoom or center.
+  const [layoutSignal, setLayoutSignal] = useState(0);
 
   const load = useCallback(async () => {
     setView({ phase: "loading" });
@@ -46,23 +49,36 @@ export function LandingView() {
 
   const toggleRail = useCallback(() => {
     setCollapsed((value) => !value);
-    setFitSignal((n) => n + 1);
+    setHighlightedId(null);
+    setLayoutSignal((n) => n + 1);
   }, []);
+
+  const openDetail = useCallback((id: number) => {
+    startPageTransition("forward", () => router.push(`/sites/${id}`));
+  }, [router]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <AppBar apiOrigin={apiOrigin()} />
-      {renderBody(view, load, { selectedId, onSelect: setSelectedId, collapsed, toggleRail, fitSignal })}
+      {renderBody(view, load, {
+        highlightedId,
+        onHighlight: setHighlightedId,
+        onOpenDetail: openDetail,
+        collapsed,
+        toggleRail,
+        layoutSignal,
+      })}
     </div>
   );
 }
 
 interface RailState {
-  selectedId: number | null;
-  onSelect: (id: number) => void;
+  highlightedId: number | null;
+  onHighlight: (id: number | null) => void;
+  onOpenDetail: (id: number) => void;
   collapsed: boolean;
   toggleRail: () => void;
-  fitSignal: number;
+  layoutSignal: number;
 }
 
 function renderBody(view: View, retry: () => void, rail: RailState) {
@@ -92,17 +108,29 @@ function renderBody(view: View, retry: () => void, rail: RailState) {
   return (
     <div className="landing-split">
       {rail.collapsed ? (
-        <RailSpine sites={view.sites} selectedId={rail.selectedId} onExpand={rail.toggleRail} />
+        <RailSpine
+          sites={view.sites}
+          highlightedId={rail.highlightedId}
+          onExpand={rail.toggleRail}
+          onHighlight={rail.onHighlight}
+          onOpenDetail={rail.onOpenDetail}
+        />
       ) : (
-        <CatalogRail sites={view.sites} selectedId={rail.selectedId} onCollapse={rail.toggleRail} />
+        <CatalogRail
+          sites={view.sites}
+          highlightedId={rail.highlightedId}
+          onHighlight={rail.onHighlight}
+          onCollapse={rail.toggleRail}
+        />
       )}
       <div className="map-panel">
         <MapPanel
           sites={mapped}
           unmappedCount={unmapped.length}
-          selectedId={rail.selectedId}
-          onSelect={rail.onSelect}
-          fitSignal={rail.fitSignal}
+          highlightedId={rail.highlightedId}
+          onHighlight={rail.onHighlight}
+          onOpenDetail={rail.onOpenDetail}
+          layoutSignal={rail.layoutSignal}
         />
       </div>
     </div>

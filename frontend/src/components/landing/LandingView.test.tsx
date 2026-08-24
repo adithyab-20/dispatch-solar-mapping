@@ -7,6 +7,12 @@ import { LandingView } from "@/components/landing/LandingView";
 import { ApiError, apiClient } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 
+const routerPush = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: routerPush }),
+}));
+
 // Replace the shared API client (AC: "Frontend tests replace the shared API client").
 vi.mock("@/lib/api/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api/client")>();
@@ -18,10 +24,31 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
 
 // Replace the Leaflet map panel so eligibility can be asserted without Leaflet.
 vi.mock("@/components/landing/MapPanel", () => ({
-  MapPanel: ({ sites, unmappedCount }: { sites: SiteListItem[]; unmappedCount: number }) => (
-    <div data-testid="map-panel" data-unmapped={unmappedCount}>
+  MapPanel: ({
+    sites,
+    unmappedCount,
+    highlightedId,
+    onHighlight,
+    onOpenDetail,
+  }: {
+    sites: SiteListItem[];
+    unmappedCount: number;
+    highlightedId?: number | null;
+    onHighlight?: (id: number | null) => void;
+    onOpenDetail?: (id: number) => void;
+  }) => (
+    <div data-testid="map-panel" data-unmapped={unmappedCount} data-highlighted={highlightedId ?? ""}>
       {sites.map((s) => (
-        <div key={s.id} data-testid="map-marker" data-site-id={s.id} />
+        <button
+          key={s.id}
+          type="button"
+          data-testid="map-marker"
+          data-site-id={s.id}
+          aria-label={`Map marker for ${s.name}`}
+          onMouseEnter={() => onHighlight?.(s.id)}
+          onMouseLeave={() => onHighlight?.(null)}
+          onClick={() => onOpenDetail?.(s.id)}
+        />
       ))}
     </div>
   ),
@@ -73,13 +100,25 @@ const CATALOGUE: SiteListItem[] = [
 
 beforeEach(() => {
   fetchSites.mockReset();
+  routerPush.mockReset();
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  Reflect.deleteProperty(document, "startViewTransition");
+  delete document.documentElement.dataset.pageTransition;
 });
 
 describe("LandingView", () => {
+  it("brands the application as Dispatch Energy Solar", () => {
+    fetchSites.mockReturnValue(new Promise(() => {}));
+    render(<LandingView />);
+
+    expect(screen.getByText("Dispatch Energy")).toHaveClass("wordmark");
+    expect(screen.getByText("Solar")).toHaveClass("wordmark-2");
+    expect(screen.queryByText("Solar Mapping")).not.toBeInTheDocument();
+  });
+
   it("shows a loading state before the catalogue resolves", () => {
     fetchSites.mockReturnValue(new Promise(() => {}));
     render(<LandingView />);
@@ -142,6 +181,68 @@ describe("LandingView", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /show the site list/i }));
     expect(screen.getByText("Desert Bloom Solar")).toBeInTheDocument();
+  });
+
+  it("highlights a mapped site while its collapsed-rail dot is hovered or focused", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    render(<LandingView />);
+    await screen.findByText("Desert Bloom Solar");
+
+    await userEvent.click(screen.getByRole("button", { name: /collapse the site list/i }));
+    const collapsedRail = screen.getByRole("complementary", { name: /site catalogue, collapsed/i });
+    const siteControl = within(collapsedRail).getByRole("button", { name: /desert bloom solar/i });
+    const map = screen.getByTestId("map-panel");
+
+    await userEvent.hover(siteControl);
+    expect(map).toHaveAttribute("data-highlighted", "1");
+    await userEvent.unhover(siteControl);
+    expect(map).toHaveAttribute("data-highlighted", "");
+
+    await userEvent.click(siteControl);
+    expect(map).toHaveAttribute("data-highlighted", "1");
+    await userEvent.tab();
+    expect(map).toHaveAttribute("data-highlighted", "2");
+    await userEvent.tab();
+    expect(map).toHaveAttribute("data-highlighted", "");
+  });
+
+  it("links expanded-row and map-marker hover highlighting in both directions", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    render(<LandingView />);
+
+    const row = (await screen.findByText("Desert Bloom Solar")).closest("a")!;
+    const marker = screen.getByRole("button", { name: /map marker for desert bloom solar/i });
+    const map = screen.getByTestId("map-panel");
+
+    await userEvent.hover(row);
+    expect(map).toHaveAttribute("data-highlighted", "1");
+    await userEvent.unhover(row);
+    expect(map).toHaveAttribute("data-highlighted", "");
+
+    await userEvent.hover(marker);
+    expect(row).toHaveClass("is-highlighted");
+    await userEvent.unhover(marker);
+    expect(row).not.toHaveClass("is-highlighted");
+  });
+
+  it("opens a marker detail page through a forward view transition", async () => {
+    fetchSites.mockResolvedValue(CATALOGUE);
+    const startViewTransition = vi.fn((update: () => void) => {
+      update();
+      return { finished: new Promise<void>(() => {}) };
+    });
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: startViewTransition,
+    });
+    render(<LandingView />);
+
+    const marker = await screen.findByRole("button", { name: /map marker for desert bloom solar/i });
+    await userEvent.click(marker);
+
+    expect(startViewTransition).toHaveBeenCalledOnce();
+    expect(routerPush).toHaveBeenCalledWith("/sites/1");
+    expect(document.documentElement).toHaveAttribute("data-page-transition", "forward");
   });
 
   it("keeps the Not on the map group visible even when every site is mapped", async () => {

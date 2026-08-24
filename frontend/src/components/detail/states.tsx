@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { TransitionLink } from "@/components/TransitionLink";
 import { type ApiErrorKind, ERROR_KIND_PHRASE } from "@/lib/api/client";
 
 const centre: React.CSSProperties = {
@@ -16,9 +15,9 @@ const centre: React.CSSProperties = {
 /** The always-available way back to the catalogue — kept in every state. */
 export function BackLink() {
   return (
-    <Link href="/" style={{ fontSize: 12, color: "var(--muted)" }}>
+    <TransitionLink href="/" direction="back" style={{ fontSize: 12, color: "var(--muted)" }}>
       ← All sites
-    </Link>
+    </TransitionLink>
   );
 }
 
@@ -63,9 +62,9 @@ export function DetailError({
         <button type="button" className="btn" onClick={onRetry}>
           Try again
         </button>
-        <Link href="/" className="btn">
+        <TransitionLink href="/" direction="back" className="btn">
           Back to all sites
-        </Link>
+        </TransitionLink>
       </div>
     </div>
   );
@@ -83,9 +82,9 @@ export function DetailNotFound() {
         No active site has this ID. It may never have existed, or it may no longer
         be active.
       </p>
-      <Link href="/" className="btn">
+      <TransitionLink href="/" direction="back" className="btn">
         Back to all sites
-      </Link>
+      </TransitionLink>
     </div>
   );
 }

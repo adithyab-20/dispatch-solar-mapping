@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { latLngBounds } from "leaflet";
 
-import Link from "next/link";
-
+import { TransitionLink } from "@/components/TransitionLink";
 import type { SiteListItem } from "@/lib/api/types";
 import { fmt } from "@/lib/detail";
 import { hasCoordinates } from "@/lib/sites";
@@ -14,24 +13,33 @@ import { hasCoordinates } from "@/lib/sites";
 const US_CENTER: [number, number] = [39.5, -98.35];
 const US_ZOOM = 4;
 
-function FitToSites({ sites, fitSignal }: { sites: SiteListItem[]; fitSignal: number }) {
+function FitToSites({ coordinateKey }: { coordinateKey: string }) {
   const map = useMap();
   useEffect(() => {
-    // The rail opening or closing changes the map's width, so re-measure before
-    // fitting — otherwise the old width leaves markers behind the panel.
-    map.invalidateSize();
-    const points = sites
-      .filter(hasCoordinates)
-      .map((s) => [s.latitude as number, s.longitude as number] as [number, number]);
+    map.invalidateSize({ animate: false, pan: false });
+    const points = coordinateKey === ""
+      ? []
+      : coordinateKey.split(";").map((pair) => pair.split(",").map(Number) as [number, number]);
     if (points.length === 0) {
       return;
     }
     if (points.length === 1) {
-      map.setView(points[0], 9);
+      map.setView(points[0], 9, { animate: false });
       return;
     }
-    map.fitBounds(latLngBounds(points), { padding: [48, 48] });
-  }, [map, sites, fitSignal]);
+    map.fitBounds(latLngBounds(points), { animate: false, padding: [48, 48] });
+  }, [coordinateKey, map]);
+  return null;
+}
+
+function ResizeForRail({ layoutSignal }: { layoutSignal: number }) {
+  const map = useMap();
+  useEffect(() => {
+    if (layoutSignal === 0) return;
+    // The rail has already committed its new width by the time this effect
+    // runs. Re-measure the canvas, but preserve the current view exactly.
+    map.invalidateSize({ animate: false, pan: false });
+  }, [layoutSignal, map]);
   return null;
 }
 
@@ -72,12 +80,26 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
         ) : (
           <span style={{ fontSize: 11, color: "var(--muted)" }}>No production estimate yet</span>
         )}
-        <Link href={`/sites/${site.id}`} style={{ fontSize: 12, color: "var(--solar)", fontWeight: 500 }}>
+        <TransitionLink
+          href={`/sites/${site.id}`}
+          direction="forward"
+          style={{ fontSize: 12, color: "var(--solar)", fontWeight: 500 }}
+        >
           Open detail →
-        </Link>
+        </TransitionLink>
       </div>
       {hasIrr ? (
-        <div style={{ display: "flex", gap: 12, marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--rule)" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, max-content)",
+            columnGap: 12,
+            rowGap: 5,
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: "1px solid var(--rule)",
+          }}
+        >
           {irr.map(([label, value]) =>
             value === null ? null : (
               <span key={label} style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -88,7 +110,10 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
               </span>
             ),
           )}
-          <span className="unit" style={{ fontSize: 9.5 }}>
+          <span
+            className="unit"
+            style={{ fontSize: 9.5, gridColumn: "1 / -1", justifySelf: "end", whiteSpace: "nowrap" }}
+          >
             kWh/m²/day
           </span>
         </div>
@@ -99,23 +124,30 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
 
 /**
  * The US map. One marker per resolved active site (these are pre-filtered by
- * the caller); unresolved/failed sites never reach here. Clicking a marker
- * selects it — the rail highlights and scrolls to the matching row — and opens
- * the callout. Nothing on the map triggers a provider lookup.
+ * the caller); unresolved/failed sites never reach here. Hovering a marker
+ * opens its callout and highlights the matching rail row; clicking navigates
+ * to its detail page. Nothing on the map triggers a provider lookup.
  */
 export function SiteMap({
   sites,
   unmappedCount,
-  selectedId = null,
-  onSelect,
-  fitSignal = 0,
+  highlightedId = null,
+  onHighlight,
+  onOpenDetail,
+  layoutSignal = 0,
 }: {
   sites: SiteListItem[];
   unmappedCount: number;
-  selectedId?: number | null;
-  onSelect?: (id: number) => void;
-  fitSignal?: number;
+  highlightedId?: number | null;
+  onHighlight?: (id: number | null) => void;
+  onOpenDetail?: (id: number) => void;
+  layoutSignal?: number;
 }) {
+  const coordinateKey = sites
+    .filter(hasCoordinates)
+    .map((site) => `${site.latitude},${site.longitude}`)
+    .join(";");
+
   return (
     <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
       <MapContainer
@@ -125,37 +157,48 @@ export function SiteMap({
         aria-label="Map of the United States with resolved solar sites"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='Map tiles &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &nbsp;|&nbsp; Geocoding &copy; OpenStreetMap / Nominatim'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {sites.map((site) => {
-          const selected = site.id === selectedId;
+          const highlighted = site.id === highlightedId;
           return (
             <CircleMarker
               key={site.id}
               center={[site.latitude as number, site.longitude as number]}
-              radius={selected ? 9 : 7}
+              radius={highlighted ? 10 : 7}
               pathOptions={{
                 color: "#ffffff",
-                weight: selected ? 2.5 : 2,
-                fillColor: selected ? "#004d00" : "#006400",
+                weight: highlighted ? 3 : 2,
+                fillColor: highlighted ? "#004d00" : "#006400",
                 fillOpacity: 1,
               }}
-              eventHandlers={{ click: () => onSelect?.(site.id) }}
+              eventHandlers={{
+                click: () => onOpenDetail?.(site.id),
+                mouseover: (event) => {
+                  event.target.openPopup();
+                  onHighlight?.(site.id);
+                },
+                mouseout: (event) => {
+                  event.target.closePopup();
+                  onHighlight?.(null);
+                },
+              }}
             >
-              <Popup>
+              <Popup autoPan={false} closeButton={false}>
                 <MarkerCallout site={site} />
               </Popup>
             </CircleMarker>
           );
         })}
-        <FitToSites sites={sites} fitSignal={fitSignal} />
+        <FitToSites coordinateKey={coordinateKey} />
+        <ResizeForRail layoutSignal={layoutSignal} />
       </MapContainer>
 
       <div
         style={{
           position: "absolute",
-          left: 12,
+          right: 12,
           top: 12,
           zIndex: 500,
           background: "var(--panel)",
@@ -180,22 +223,6 @@ export function SiteMap({
         ) : null}
       </div>
 
-      <div
-        className="mono"
-        style={{
-          position: "absolute",
-          right: 12,
-          bottom: 10,
-          zIndex: 500,
-          fontSize: 10,
-          color: "var(--muted)",
-          background: "rgba(255,255,255,0.9)",
-          padding: "2px 6px",
-          borderRadius: 2,
-        }}
-      >
-        Geocoding © OpenStreetMap / Nominatim
-      </div>
     </div>
   );
 }

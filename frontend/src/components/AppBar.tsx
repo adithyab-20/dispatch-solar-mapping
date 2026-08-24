@@ -28,10 +28,10 @@ export function AppBar({ apiOrigin }: { apiOrigin: string }) {
           </g>
         </svg>
         <span className="wordmark" style={{ fontSize: 12.5 }}>
-          Dispatch
+          Dispatch Energy
         </span>
         <span className="wordmark-2" style={{ fontSize: 12.5 }}>
-          Solar Mapping
+          Solar
         </span>
       </div>
       <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>

@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { StatusIndicator } from "@/components/StatusIndicator";
+import { TransitionLink } from "@/components/TransitionLink";
 import type { SiteListItem } from "@/lib/api/types";
 import { fmt } from "@/lib/detail";
 import { hasCoordinates, isMappable, missingResultNote, monthlyAcSeries } from "@/lib/sites";
@@ -90,20 +89,32 @@ function CautionGlyph({ note }: { note: string }) {
 /**
  * One catalogue entry — a single link to the detail route (UI brief §8). A
  * mapped row shows name, address, coordinates, annual AC production with its
- * sparkline, and — on hover, focus, or selection — the irradiance line. A
+ * sparkline, and — on hover, focus, or map highlight — the irradiance line. A
  * mapped row missing a result carries a caution glyph and names what is
  * missing; an unmapped row shows only identity plus its status word.
  */
-export function SiteRow({ site, selected = false }: { site: SiteListItem; selected?: boolean }) {
+export function SiteRow({
+  site,
+  highlighted = false,
+  onHighlight,
+}: {
+  site: SiteListItem;
+  highlighted?: boolean;
+  onHighlight?: (id: number | null) => void;
+}) {
   const hasCoords = hasCoordinates(site);
   const note = isMappable(site) ? missingResultNote(site) : null;
   const acSeries = monthlyAcSeries(site);
   return (
-    <Link
+    <TransitionLink
       href={`/sites/${site.id}`}
-      className={`site-row${selected ? " is-selected" : ""}`}
-      aria-current={selected ? "true" : undefined}
+      direction="forward"
+      className={`site-row${highlighted ? " is-highlighted" : ""}`}
       data-site-row={site.id}
+      onMouseEnter={() => onHighlight?.(site.id)}
+      onMouseLeave={() => onHighlight?.(null)}
+      onFocus={() => onHighlight?.(site.id)}
+      onBlur={() => onHighlight?.(null)}
     >
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -152,6 +163,6 @@ export function SiteRow({ site, selected = false }: { site: SiteListItem; select
         </div>
       </div>
       <IrradianceLine site={site} />
-    </Link>
+    </TransitionLink>
   );
 }

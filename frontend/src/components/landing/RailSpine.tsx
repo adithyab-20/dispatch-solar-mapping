@@ -1,13 +1,13 @@
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites } from "@/lib/sites";
 
-function Dot({ site, selected }: { site: SiteListItem; selected: boolean }) {
+function Dot({ site, highlighted }: { site: SiteListItem; highlighted: boolean }) {
   const mapped = site.geocode_status === "resolved";
   const failed = site.geocode_status === "failed";
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" role="img" aria-label={`${site.name} — ${site.geocode_status}`}>
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
       {mapped ? (
-        <circle cx="6" cy="6" r="4.2" fill={selected ? "var(--solar-deep)" : "var(--solar)"} />
+        <circle cx="6" cy="6" r="4.2" fill={highlighted ? "var(--solar-deep)" : "var(--solar)"} />
       ) : (
         <circle cx="6" cy="6" r="4.2" fill="none" stroke={failed ? "var(--fail)" : "var(--muted)"} strokeWidth="1.3" />
       )}
@@ -18,17 +18,21 @@ function Dot({ site, selected }: { site: SiteListItem; selected: boolean }) {
 /**
  * The collapsed rail: a 56px spine with the expand control, the site count,
  * and one status dot per site — mapped sites as filled discs (deep green when
- * selected), unmapped as outlines, failed outlined in the failure colour
+ * highlighted), unmapped as outlines, failed outlined in the failure colour
  * (each dot also carries its name and status for assistive tech).
  */
 export function RailSpine({
   sites,
-  selectedId,
+  highlightedId,
   onExpand,
+  onHighlight,
+  onOpenDetail,
 }: {
   sites: SiteListItem[];
-  selectedId: number | null;
+  highlightedId: number | null;
   onExpand: () => void;
+  onHighlight: (id: number | null) => void;
+  onOpenDetail: (id: number) => void;
 }) {
   const { mapped, unmapped } = partitionSites(sites);
   return (
@@ -73,13 +77,35 @@ export function RailSpine({
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", marginTop: 2 }}>
         {mapped.map((site) => (
-          <Dot key={site.id} site={site} selected={site.id === selectedId} />
+          <button
+            key={site.id}
+            type="button"
+            className="spine-site"
+            aria-label={`${site.name} — ${site.geocode_status}`}
+            title={site.name}
+            onMouseEnter={() => onHighlight(site.id)}
+            onMouseLeave={() => onHighlight(null)}
+            onFocus={() => onHighlight(site.id)}
+            onBlur={() => onHighlight(null)}
+            onClick={() => onOpenDetail(site.id)}
+          >
+            <Dot site={site} highlighted={site.id === highlightedId} />
+          </button>
         ))}
         {mapped.length > 0 && unmapped.length > 0 ? (
           <div style={{ width: 16, height: 1, background: "var(--rule-strong)" }} />
         ) : null}
         {unmapped.map((site) => (
-          <Dot key={site.id} site={site} selected={false} />
+          <button
+            key={site.id}
+            type="button"
+            className="spine-site"
+            aria-label={`${site.name} — ${site.geocode_status}; not on the map`}
+            title={`${site.name} — not on the map`}
+            onClick={() => onOpenDetail(site.id)}
+          >
+            <Dot site={site} highlighted={false} />
+          </button>
         ))}
       </div>
     </aside>

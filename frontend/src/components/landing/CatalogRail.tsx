@@ -10,29 +10,31 @@ import { partitionSites, unmappedSummary } from "@/lib/sites";
  * The catalogue: every active site, grouped into "On the map" (resolved, has a
  * marker) and a collapsible "Not on the map" (pending, no-match, failed). Both
  * groups keep the server's import order; nothing here is sorted or filtered.
- * Selecting a map marker scrolls its row into view here.
+ * Highlighting a map marker scrolls its row into view here.
  */
 export function CatalogRail({
   sites,
-  selectedId,
+  highlightedId,
+  onHighlight,
   onCollapse,
 }: {
   sites: SiteListItem[];
-  selectedId: number | null;
+  highlightedId: number | null;
+  onHighlight: (id: number | null) => void;
   onCollapse: () => void;
 }) {
   const { mapped, unmapped } = partitionSites(sites);
   // The folded group opens itself when every remaining site is in it (UI brief §3),
-  // and when the selected marker's row would otherwise be hidden inside it.
+  // and when a highlighted marker's row would otherwise be hidden inside it.
   const [unmappedOpen, setUnmappedOpen] = useState(mapped.length === 0);
   const railRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (selectedId === null) return;
+    if (highlightedId === null) return;
     railRef.current
-      ?.querySelector(`[data-site-row="${selectedId}"]`)
-      ?.scrollIntoView({ block: "nearest" });
-  }, [selectedId]);
+      ?.querySelector(`[data-site-row="${highlightedId}"]`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [highlightedId]);
 
   return (
     <aside
@@ -75,7 +77,12 @@ export function CatalogRail({
           </p>
         </div>
         {mapped.map((site) => (
-          <SiteRow key={site.id} site={site} selected={site.id === selectedId} />
+          <SiteRow
+            key={site.id}
+            site={site}
+            highlighted={site.id === highlightedId}
+            onHighlight={onHighlight}
+          />
         ))}
       </section>
 
@@ -129,7 +136,12 @@ export function CatalogRail({
         {unmappedOpen && unmapped.length > 0 ? (
           <div style={{ background: "var(--panel)" }}>
             {unmapped.map((site) => (
-              <SiteRow key={site.id} site={site} selected={site.id === selectedId} />
+              <SiteRow
+                key={site.id}
+                site={site}
+                highlighted={site.id === highlightedId}
+                onHighlight={onHighlight}
+              />
             ))}
           </div>
         ) : null}

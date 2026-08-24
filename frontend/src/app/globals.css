@@ -237,8 +237,8 @@ button:focus-visible {
 }
 
 /* Catalogue row: the irradiance line stays hidden until the row is hovered,
-   focused, or selected (UI brief §3); the selected row keeps it open and is
-   marked by a left rule + tint, never colour alone. */
+   focused, or highlighted from the map. Highlighting uses a left rule + tint,
+   never colour alone. */
 .site-row {
   display: block;
   padding: 15px 18px;
@@ -255,7 +255,7 @@ button:focus-visible {
   background: var(--panel-2);
 }
 
-.site-row.is-selected {
+.site-row.is-highlighted {
   border-left-width: 4px;
   border-left-color: var(--solar);
   padding-left: 14px;
@@ -267,14 +267,36 @@ button:focus-visible {
 }
 
 .site-row:hover .row-irr,
-.site-row:focus-visible .row-irr,
-.site-row.is-selected .row-irr {
+.site-row:focus-visible .row-irr {
+  display: flex;
+}
+
+.site-row.is-highlighted .row-irr {
   display: flex;
 }
 
 /* Collapsed rail: a 56px spine with the count and a status-dot summary. */
 .catalog-rail.is-collapsed {
   width: 56px;
+}
+
+.spine-site {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spine-site:hover,
+.spine-site:focus-visible {
+  background: var(--solar-wash);
 }
 
 /* Site detail page: a single vertical stack that scrolls under the app bar. */
@@ -343,6 +365,50 @@ button:focus-visible {
   .assumptions-grid {
     grid-template-columns: 1fr;
   }
+}
+
+@keyframes page-forward-out {
+  to {
+    opacity: 0.72;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes page-forward-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes page-back-out {
+  to {
+    opacity: 0.72;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes page-back-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(-3%);
+  }
+}
+
+html[data-page-transition="forward"]::view-transition-old(root) {
+  animation: 220ms ease-in both page-forward-out;
+}
+
+html[data-page-transition="forward"]::view-transition-new(root) {
+  animation: 260ms ease-out both page-forward-in;
+}
+
+html[data-page-transition="back"]::view-transition-old(root) {
+  animation: 220ms ease-in both page-back-out;
+}
+
+html[data-page-transition="back"]::view-transition-new(root) {
+  animation: 260ms ease-out both page-back-in;
 }
 
 @media (prefers-reduced-motion: reduce) {

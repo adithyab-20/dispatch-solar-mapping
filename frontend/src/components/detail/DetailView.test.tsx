@@ -94,9 +94,31 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+  Reflect.deleteProperty(document, "startViewTransition");
+  delete document.documentElement.dataset.pageTransition;
 });
 
 describe("DetailView — complete result", () => {
+  it("animates the Back to all sites navigation", async () => {
+    fetchSite.mockResolvedValue(makeDetail());
+    const startViewTransition = vi.fn((update: () => void) => {
+      update();
+      return { finished: new Promise<void>(() => {}) };
+    });
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: startViewTransition,
+    });
+    render(<DetailView siteId={1} />);
+
+    await screen.findByRole("heading", { name: "Desert Bloom Solar" });
+    const back = screen.getByRole("link", { name: /all sites/i });
+    await userEvent.click(back);
+
+    expect(startViewTransition).toHaveBeenCalledOnce();
+    expect(document.documentElement).toHaveAttribute("data-page-transition", "back");
+  });
+
   it("fetches the requested site through the shared client", async () => {
     fetchSite.mockResolvedValue(makeDetail());
     render(<DetailView siteId={1} />);
