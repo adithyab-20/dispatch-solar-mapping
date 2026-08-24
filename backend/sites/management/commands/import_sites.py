@@ -6,6 +6,7 @@ from typing import Any
 from django.core.management.base import BaseCommand, CommandError
 
 from sites.services.importing import ImportNoticeKind, upsert_sites
+from sites.services.workflow import process_new_sites
 
 
 class Command(BaseCommand):
@@ -32,6 +33,7 @@ class Command(BaseCommand):
             raise CommandError("The top level must be a JSON array.")
 
         result = upsert_sites(rows)
+        process_new_sites(result.created_site_ids)
         for notice in result.notices:
             style = (
                 self.style.ERROR
