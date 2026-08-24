@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connection
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
 from sites.services.geocoding import NominatimGateway
@@ -295,3 +296,164 @@ def test_replaceable_initial_dataset_imports_at_least_five_named_us_sites() -> N
     sites = list(Site.objects.all())
     assert len(sites) >= 5
     assert all(site.name and site.address for site in sites)
+
+
+@pytest.mark.django_db
+def test_sync_invalid_row_leaves_all_lifecycle_state_unchanged(tmp_path: Path) -> None:
+    active = Site.objects.create(name="Active", address="1 Main St")
+    inactive = Site.objects.create(
+        name="Inactive", address="2 Main St", is_active=False
+    )
+    before = list(Site.objects.order_by("id").values())
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(
+        json.dumps(
+            [
+                {"name": "Replacement", "address": "3 Main St"},
+                {"name": "...", "address": "4 Main St"},
+            ]
+        )
+    )
+
+    with pytest.raises(CommandError, match="Sync aborted: row 2"):
+        call_command("import_sites", import_path, mode="sync")
+
+    assert list(Site.objects.order_by("id").values()) == before
+    assert Site.objects.get(pk=active.pk).is_active is True
+    assert Site.objects.get(pk=inactive.pk).is_active is False
+
+
+@pytest.mark.django_db(transaction=True)
+def test_sync_reconciles_every_lifecycle_transition_before_processing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    retained = Site.objects.create(name="Retained", address="1 Main St")
+    reactivated = Site.objects.create(
+        name="Stored Reactivated",
+        address="2 Main St",
+        is_active=False,
+        geocode_status=GeocodeStatus.FAILED,
+        geocode_error="Stored failure",
+        geocode_attempted_at=datetime(2026, 8, 20, 12, 0, tzinfo=timezone.utc),
+    )
+    omitted = Site.objects.create(name="Omitted", address="3 Main St")
+    reactivated_before = Site.objects.values().get(pk=reactivated.pk)
+    observed: list[tuple[tuple[int, ...], set[tuple[str, bool]], bool]] = []
+
+    def observe_processing(site_ids: tuple[int, ...]) -> None:
+        observed.append(
+            (
+                site_ids,
+                set(Site.objects.values_list("name", "is_active")),
+                connection.in_atomic_block,
+            )
+        )
+
+    monkeypatch.setattr(
+        "sites.management.commands.import_sites.process_new_sites",
+        observe_processing,
+    )
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(
+        json.dumps(
+            [
+                {"name": "Retained", "address": "1 Main St"},
+                {"name": " stored reactivated ", "address": "2 MAIN ST."},
+                {"name": "New Site", "address": "4 Main St"},
+                {"name": "new-site", "address": "4 Main St."},
+            ]
+        )
+    )
+
+    call_command("import_sites", import_path, mode="sync")
+
+    created = Site.objects.get(name="New Site")
+    assert observed == [
+        (
+            (created.id,),
+            {
+                ("Retained", True),
+                ("Stored Reactivated", True),
+                ("Omitted", False),
+                ("New Site", True),
+            },
+            False,
+        )
+    ]
+    reactivated.refresh_from_db()
+    reactivated_after = Site.objects.values().get(pk=reactivated.pk)
+    expected = {
+        **reactivated_before,
+        "is_active": True,
+        "updated_at": reactivated_after["updated_at"],
+    }
+    assert reactivated_after == expected
+    retained.refresh_from_db()
+    omitted.refresh_from_db()
+    assert retained.is_active is True
+    assert omitted.is_active is False
+
+
+@pytest.mark.django_db(transaction=True)
+def test_sync_replacement_pair_is_new_and_survives_processing_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old = Site.objects.create(name="Original", address="1 Main St")
+
+    def crash_after_reconciliation(site_ids: tuple[int, ...]) -> None:
+        assert len(site_ids) == 1
+        assert Site.objects.get(pk=old.pk).is_active is False
+        assert Site.objects.get(pk=site_ids[0]).is_active is True
+        raise RuntimeError("unexpected provider bug")
+
+    monkeypatch.setattr(
+        "sites.management.commands.import_sites.process_new_sites",
+        crash_after_reconciliation,
+    )
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(
+        json.dumps([{"name": "Original", "address": "99 Replacement Ave"}])
+    )
+
+    with pytest.raises(RuntimeError, match="unexpected provider bug"):
+        call_command("import_sites", import_path, mode="sync")
+
+    old.refresh_from_db()
+    replacement = Site.objects.exclude(pk=old.pk).get()
+    assert old.is_active is False
+    assert replacement.is_active is True
+    assert replacement.geocode_status == GeocodeStatus.PENDING
+
+
+@pytest.mark.django_db
+def test_sync_reports_duplicates_and_partial_identity_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "sites.management.commands.import_sites.process_new_sites", Mock()
+    )
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(
+        json.dumps(
+            [
+                {"name": "North Array", "address": "1 Main St"},
+                {"name": " north-array ", "address": "1 MAIN ST."},
+                {"name": "South Array", "address": "1 Main St."},
+                {"name": "North Array", "address": "2 Main St"},
+            ]
+        )
+    )
+    stderr = StringIO()
+    stdout = StringIO()
+
+    call_command("import_sites", import_path, mode="sync", stderr=stderr, stdout=stdout)
+
+    assert Site.objects.count() == 3
+    assert "Row 2 skipped: duplicate normalized name/address pair" in stderr.getvalue()
+    assert "normalized address is already used under a different normalized name" in (
+        stderr.getvalue()
+    )
+    assert "normalized name is already used with a different normalized address" in (
+        stderr.getvalue()
+    )
+    assert "1 duplicate rows skipped" in stdout.getvalue()

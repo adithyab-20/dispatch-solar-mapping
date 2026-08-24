@@ -2,6 +2,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import StrEnum
 
+from django.db import transaction
+
 from sites.models import Site
 from sites.services.normalization import normalize_text
 
@@ -35,6 +37,27 @@ class UpsertResult:
             f"{self.unchanged_count} unchanged, "
             f"{self.duplicate_count} duplicate rows skipped, "
             f"{self.rejected_count} rejected."
+        )
+
+
+@dataclass(frozen=True)
+class SyncResult:
+    created_count: int
+    reactivated_count: int
+    unchanged_count: int
+    deactivated_count: int
+    duplicate_count: int
+    created_site_ids: tuple[int, ...]
+    notices: tuple[ImportNotice, ...]
+
+    @property
+    def summary(self) -> str:
+        return (
+            f"Sync complete: {self.created_count} created, "
+            f"{self.reactivated_count} reactivated, "
+            f"{self.unchanged_count} unchanged, "
+            f"{self.deactivated_count} deactivated, "
+            f"{self.duplicate_count} duplicate rows skipped."
         )
 
 
@@ -211,5 +234,114 @@ def upsert_sites(rows: list[object]) -> UpsertResult:
         duplicate_count=duplicate_count,
         rejected_count=rejected_count,
         created_site_ids=tuple(created_site_ids),
+        notices=tuple(notices),
+    )
+
+
+def sync_sites(rows: list[object]) -> SyncResult:
+    """Atomically reconcile the complete desired active site set."""
+    valid_rows: list[tuple[int, _ValidRow]] = []
+    seen_pairs: set[tuple[str, str]] = set()
+    duplicate_count = 0
+    notices: list[ImportNotice] = []
+
+    for row_number, row in enumerate(rows, start=1):
+        valid_row, errors = _validate_row(row)
+        if valid_row is None:
+            raise ValueError(f"row {row_number}: {'; '.join(errors)}")
+        pair = (valid_row.normalized_name, valid_row.normalized_address)
+        if pair in seen_pairs:
+            duplicate_count += 1
+            notices.append(
+                ImportNotice(
+                    kind=ImportNoticeKind.WARNING,
+                    message=(
+                        f"Row {row_number} skipped: duplicate normalized "
+                        "name/address pair."
+                    ),
+                )
+            )
+            continue
+        seen_pairs.add(pair)
+        valid_rows.append((row_number, valid_row))
+
+    with transaction.atomic():
+        existing_sites = list(Site.objects.select_for_update().all())
+        sites_by_pair = {
+            (site.normalized_name, site.normalized_address): site
+            for site in existing_sites
+        }
+        sites_by_name: dict[str, list[Site]] = defaultdict(list)
+        sites_by_address: dict[str, list[Site]] = defaultdict(list)
+        for site in existing_sites:
+            sites_by_name[site.normalized_name].append(site)
+            sites_by_address[site.normalized_address].append(site)
+
+        created_ids: list[int] = []
+        reactivated_count = 0
+        unchanged_count = 0
+        for row_number, valid_row in valid_rows:
+            same_address_ids = [
+                site.id
+                for site in sites_by_address[valid_row.normalized_address]
+                if site.normalized_name != valid_row.normalized_name
+            ]
+            address_notice = _ambiguity_notice(
+                row_number,
+                subject="address",
+                relationship="under a different normalized name",
+                site_ids=same_address_ids,
+            )
+            if address_notice is not None:
+                notices.append(address_notice)
+
+            same_name_ids = [
+                site.id
+                for site in sites_by_name[valid_row.normalized_name]
+                if site.normalized_address != valid_row.normalized_address
+            ]
+            name_notice = _ambiguity_notice(
+                row_number,
+                subject="name",
+                relationship="with a different normalized address",
+                site_ids=same_name_ids,
+            )
+            if name_notice is not None:
+                notices.append(name_notice)
+
+            pair = (valid_row.normalized_name, valid_row.normalized_address)
+            matched_site = sites_by_pair.get(pair)
+            if matched_site is None:
+                matched_site = Site.objects.create(
+                    name=valid_row.name,
+                    address=valid_row.address,
+                )
+                created_ids.append(matched_site.id)
+                sites_by_pair[pair] = matched_site
+                sites_by_name[valid_row.normalized_name].append(matched_site)
+                sites_by_address[valid_row.normalized_address].append(matched_site)
+            elif matched_site.is_active:
+                unchanged_count += 1
+            else:
+                matched_site.is_active = True
+                matched_site.save(update_fields=("is_active", "updated_at"))
+                reactivated_count += 1
+
+        omitted = [
+            site
+            for pair, site in sites_by_pair.items()
+            if site.is_active and pair not in seen_pairs
+        ]
+        for site in omitted:
+            site.is_active = False
+            site.save(update_fields=("is_active", "updated_at"))
+
+    return SyncResult(
+        created_count=len(created_ids),
+        reactivated_count=reactivated_count,
+        unchanged_count=unchanged_count,
+        deactivated_count=len(omitted),
+        duplicate_count=duplicate_count,
+        created_site_ids=tuple(created_ids),
         notices=tuple(notices),
     )

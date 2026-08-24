@@ -5,7 +5,13 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
-from sites.services.importing import ImportNoticeKind, upsert_sites
+from sites.services.importing import (
+    ImportNoticeKind,
+    SyncResult,
+    UpsertResult,
+    sync_sites,
+    upsert_sites,
+)
 from sites.services.workflow import process_new_sites
 
 
@@ -14,7 +20,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("path", type=Path)
-        parser.add_argument("--mode", choices=("upsert",), required=True)
+        parser.add_argument("--mode", choices=("upsert", "sync"), required=True)
 
     def handle(self, *args: Any, **options: Any) -> None:
         path: Path = options["path"]
@@ -32,7 +38,14 @@ class Command(BaseCommand):
         if not isinstance(rows, list):
             raise CommandError("The top level must be a JSON array.")
 
-        result = upsert_sites(rows)
+        result: SyncResult | UpsertResult
+        if options["mode"] == "sync":
+            try:
+                result = sync_sites(rows)
+            except ValueError as error:
+                raise CommandError(f"Sync aborted: {error}.") from error
+        else:
+            result = upsert_sites(rows)
         process_new_sites(result.created_site_ids)
         for notice in result.notices:
             style = (
