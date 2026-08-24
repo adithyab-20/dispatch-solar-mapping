@@ -14,7 +14,7 @@
   --rule:#E2E2E2; --rule-strong:#C2C2C2;
   --ink:#101010; --ink-2:#262223; --navy:#2C6B3A; /* retained name; Dispatch uses green, not blue */ --ok-deep:#004D00; --muted:#58595B; --faint:#767676;
   --solar:#006400; --solar-deep:#004D00; --solar-lite:#4E9E62; --solar-wash:#E9F2EA;
-  --pv:#C96A1C; --pv-deep:#B9601B; /* PVWatts production bars — the only non-green mark */
+  --pv:#C96A1C; --pv-deep:#B9601B; --pv-deepest:#9A4F14; /* PVWatts marks — the only non-green: bars #C96A1C, headline #B9601B, section eyebrow #9A4F14 (AA-normal at 11px) */
   --teal:#3E8E4F; --teal-wash:#EDF4EE;
   --ok:#006400; --ok-wash:#E9F2EA; --warn:#8A6100; --warn-wash:#FBF0DC;
   --fail:#B3261E; --fail-wash:#FBE7E5;
@@ -159,7 +159,7 @@ h1,h2{font-family:var(--display);letter-spacing:-.005em}
     <svg width="8" height="13" viewBox="0 0 8 13" aria-hidden="true"><path d="M1.5 1.5L6 6.5l-4.5 5" stroke="#767676" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
   </button>
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
-    <div class="sec" style="color:var(--pv-deep)">PVWatts v8 estimate</div>
+    <div class="sec" style="color:var(--pv-deepest)">PVWatts v8 estimate</div>
     <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">179,270</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">20.5</span> <span class="unit">%</span></div></div>
@@ -185,7 +185,7 @@ h1,h2{font-family:var(--display);letter-spacing:-.005em}
     <span class="mono" style="font-size:10.5px;color:var(--muted)">7 sites</span>
   </header>
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
-    <div class="sec" style="color:var(--pv-deep)">PVWatts v8 estimate</div>
+    <div class="sec" style="color:var(--pv-deepest)">PVWatts v8 estimate</div>
     <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">179,270</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">20.5</span> <span class="unit">%</span></div></div>

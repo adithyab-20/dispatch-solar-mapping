@@ -99,7 +99,7 @@ const detail = phone('Detail, top · 390 × 844',
     <svg width="8" height="13" viewBox="0 0 8 13" aria-hidden="true"><path d="M1.5 1.5L6 6.5l-4.5 5" stroke="#767676" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
   </button>
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
-    <div class="sec" style="color:var(--pv-deep)">PVWatts v8 estimate</div>
+    <div class="sec" style="color:var(--pv-deepest)">PVWatts v8 estimate</div>
     <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">179,270</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">20.5</span> <span class="unit">%</span></div></div>
@@ -120,7 +120,7 @@ const chart = phone('Detail, results · 390 × 844',
   'The chart stays a first-class element at phone width, and the monthly table stays with it — scrolling sideways rather than being dropped.',
   `${bar}
   <div style="padding:14px 16px;border-bottom:1px solid var(--rule)">
-    <div class="sec" style="color:var(--pv-deep)">PVWatts v8 estimate</div>
+    <div class="sec" style="color:var(--pv-deepest)">PVWatts v8 estimate</div>
     <div style="margin-top:10px"><span class="num" style="font-size:30px;color:var(--pv-deep);letter-spacing:-.02em">${fmt(ANNUAL)}</span> <span class="unit" style="font-size:11px">kWh / year</span></div>
     <div style="display:flex;gap:20px;margin-top:12px">
       <div><div class="lbl">Capacity factor</div><div style="margin-top:3px"><span class="num" style="font-size:16px">${(ANNUAL/876000*100).toFixed(1)}</span> <span class="unit">%</span></div></div>

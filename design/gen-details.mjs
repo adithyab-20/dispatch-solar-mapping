@@ -161,7 +161,7 @@ const locationPanel = (resolved, coords, kind, status, ts) => `
 
 const pvwattsSection = (hoverIdx = 5) => `
   <div class="panel" style="border-radius:2px;padding:16px 18px">
-    ${sectionTitle('PVWatts v8 estimate', 'standardised 100 kW scenario · as of 23 Aug 2026, 19:04', 'var(--pv-deep)')}
+    ${sectionTitle('PVWatts v8 estimate', 'standardised 100 kW scenario · as of 23 Aug 2026, 19:04', 'var(--pv-deepest)')}
     <div style="display:flex;margin:2px 0 18px;padding:2px 0">
       <div style="flex:1;padding-right:18px">
         <div class="lbl">Annual AC production</div>
@@ -325,7 +325,7 @@ writeFileSync('parts/DetailUnresolved.body.html', page(`
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      ${blockedPanel('PVWatts v8 estimate', 'PVWatts needs latitude and longitude. No request was made, so there is nothing to show — not a zero, not an estimate.', 'var(--pv-deep)')}
+      ${blockedPanel('PVWatts v8 estimate', 'PVWatts needs latitude and longitude. No request was made, so there is nothing to show — not a zero, not an estimate.', 'var(--pv-deepest)')}
       ${blockedPanel('Solar resource', 'The solar resource service needs latitude and longitude. No request was made.')}
     </div>
     <div class="panel" style="border-radius:2px;padding:16px 18px">
