@@ -314,9 +314,7 @@ def test_upsert_created_row_ignores_deactivated_collisions(tmp_path: Path) -> No
     # A deactivated record must not make a newly created site look ambiguous.
     Site.objects.create(name="Old Array", address="1 Main St", is_active=False)
     import_path = tmp_path / "sites.json"
-    import_path.write_text(
-        json.dumps([{"name": "New Array", "address": "1 Main St"}])
-    )
+    import_path.write_text(json.dumps([{"name": "New Array", "address": "1 Main St"}]))
     stderr = StringIO()
 
     call_command("import_sites", import_path, mode="upsert", stderr=stderr)
