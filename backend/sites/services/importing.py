@@ -24,6 +24,7 @@ class UpsertResult:
     unchanged_count: int
     duplicate_count: int
     rejected_count: int
+    created_site_ids: tuple[int, ...]
     notices: tuple[ImportNotice, ...]
 
     @property
@@ -122,6 +123,7 @@ def upsert_sites(rows: list[object]) -> UpsertResult:
     duplicate_count = 0
     rejected_count = 0
     notices: list[ImportNotice] = []
+    created_site_ids: list[int] = []
     seen_pairs: set[tuple[str, str]] = set()
 
     for row_number, row in enumerate(rows, start=1):
@@ -200,6 +202,7 @@ def upsert_sites(rows: list[object]) -> UpsertResult:
         sites_by_name[valid_row.normalized_name].append(created_site)
         sites_by_address[valid_row.normalized_address].append(created_site)
         created_count += 1
+        created_site_ids.append(created_site.id)
 
     return UpsertResult(
         created_count=created_count,
@@ -207,5 +210,6 @@ def upsert_sites(rows: list[object]) -> UpsertResult:
         unchanged_count=unchanged_count,
         duplicate_count=duplicate_count,
         rejected_count=rejected_count,
+        created_site_ids=tuple(created_site_ids),
         notices=tuple(notices),
     )

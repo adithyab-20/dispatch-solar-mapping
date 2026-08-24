@@ -2,18 +2,32 @@ import json
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
+from sites.services.geocoding import NominatimGateway
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
+@pytest.fixture(autouse=True)
+def nominatim_http_boundary(
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_nominatim_gateway: NominatimGateway,
+) -> None:
+    monkeypatch.setattr(
+        isolated_nominatim_gateway.session,
+        "get",
+        Mock(return_value=Mock(status_code=200, text="[]")),
+    )
+
+
 @pytest.mark.django_db
-def test_upsert_import_creates_new_site_in_initial_processing_state(
+def test_upsert_import_creates_and_geocodes_a_new_site(
     tmp_path: Path,
 ) -> None:
     import_path = tmp_path / "sites.json"
@@ -36,7 +50,11 @@ def test_upsert_import_creates_new_site_in_initial_processing_state(
     assert site.normalized_name == "chicago sample west"
     assert site.normalized_address == "121 n lasalle st chicago il 60602"
     assert site.is_active is True
-    assert site.geocode_status == GeocodeStatus.PENDING
+    assert site.geocode_status == GeocodeStatus.UNRESOLVED
+    assert site.geocode_error == (
+        "No matching U.S. location was found for this address."
+    )
+    assert site.geocode_attempted_at is not None
     assert site.solar_resource_status == ProcessingStatus.BLOCKED
     assert site.pvwatts_status == ProcessingStatus.BLOCKED
 

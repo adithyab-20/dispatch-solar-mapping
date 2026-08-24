@@ -3,7 +3,7 @@
 A local Django and React application for mapping U.S. solar sites and showing
 their Solar Resource and PVWatts results. The current backend includes the Site
 domain, its read-only API, and an idempotent site-import workflow; provider
-workflows and the frontend are added in later slices.
+workflows beyond geocoding and the frontend are added in later slices.
 
 ## Backend quickstart
 
@@ -50,10 +50,20 @@ site omitted from the file. Later duplicate pairs are skipped. Invalid rows and
 same-name/different-address or same-address/different-name ambiguities are
 reported without preventing other valid rows from being accepted.
 
-New records start with geocoding `pending` and both downstream stages
-`blocked`. This import slice does not contact external providers; geocoding is
-added by the next workflow ticket. Replace the rows in `data/sites_initial.json`
-when the authoritative site list arrives, then run the same command again.
+After the complete upsert is committed, new records are geocoded sequentially
+through Nominatim while both downstream stages remain `blocked`. The command
+stores resolved coordinates, a clear unresolved outcome, or a safe provider
+failure. Byte-identical addresses share one handled geocoding result during a
+single command run; formatting variants remain separate requests, and the
+cache is discarded when the command exits. Repeating an unchanged import makes
+no provider request.
+
+The public Nominatim service is appropriate here only for this small local
+assessment. The importer sends a custom User-Agent, serializes requests, spaces
+request starts by at least 1.1 seconds, and follows the official
+[Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+Replace the rows in `data/sites_initial.json` when the authoritative site list
+arrives, then run the same command again.
 
 ## Backend verification
 
@@ -72,7 +82,9 @@ enabled with `--disable-socket` in the checked-in pytest configuration.
 
 ## Configuration
 
-`.env.example` documents the eventual provider configuration. Copy it to the
-untracked `.env`; `python-dotenv` loads that repository-root file without
-overriding variables already present in the environment. A missing NLR key
-does not prevent this read-only backend slice from starting.
+`.env.example` documents the provider configuration. Copy it to the untracked
+`.env`; `python-dotenv` loads that repository-root file without overriding
+variables already present in the environment. `CONTACT_EMAIL` is included in
+the Nominatim User-Agent when present; otherwise the importer logs a warning
+and still sends a descriptive application User-Agent. The NLR key is used by
+later provider stages.
