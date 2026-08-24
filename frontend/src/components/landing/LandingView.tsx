@@ -6,7 +6,7 @@ import { AppBar } from "@/components/AppBar";
 import { CatalogRail } from "@/components/landing/CatalogRail";
 import { MapPanel } from "@/components/landing/MapPanel";
 import { EmptyState, ErrorState, LoadingState } from "@/components/landing/states";
-import { ApiError, type ApiErrorKind, apiBaseUrl, apiClient } from "@/lib/api/client";
+import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites } from "@/lib/sites";
 
@@ -14,15 +14,6 @@ type View =
   | { phase: "loading" }
   | { phase: "error"; kind: ApiErrorKind }
   | { phase: "ready"; sites: SiteListItem[] };
-
-function apiOrigin(): string {
-  const base = apiBaseUrl();
-  try {
-    return new URL(base).host;
-  } catch {
-    return base;
-  }
-}
 
 /**
  * The landing page: fetches the active-site catalogue through the shared API

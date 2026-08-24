@@ -30,6 +30,23 @@ export function apiBaseUrl(): string {
   return configured.replace(/\/+$/, "");
 }
 
+/** The host of the configured API base, for display in the app bar. */
+export function apiOrigin(): string {
+  const base = apiBaseUrl();
+  try {
+    return new URL(base).host;
+  } catch {
+    return base;
+  }
+}
+
+/** A safe, reader-facing phrase for each transport failure kind. */
+export const ERROR_KIND_PHRASE: Record<ApiErrorKind, string> = {
+  network: "network error",
+  http: "server error",
+  parse: "unexpected response",
+};
+
 async function getJson<T>(path: string): Promise<T> {
   let response: Response;
   try {
