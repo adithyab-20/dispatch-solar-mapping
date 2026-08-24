@@ -79,7 +79,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = False
 
 NLR_API_KEY = os.getenv("NLR_API_KEY", "")
-NLR_API_BASE = "https://developer.nlr.gov"
+NLR_API_BASE = os.getenv("NLR_API_BASE", "https://developer.nlr.gov")
 CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "")
 NOMINATIM_BASE_URL = os.getenv(
     "NOMINATIM_BASE_URL",

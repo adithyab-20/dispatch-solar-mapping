@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 PVWATTS_ENDPOINT_PATH = "/api/pvwatts/v8.json"
 PVWATTS_TIMEOUT_SECONDS = 10
 PVWATTS_SESSION = requests.Session()
+PVWATTS_CHECK_LATITUDE = 40.0
+PVWATTS_CHECK_LONGITUDE = -105.0
 
 PVWATTS_BASE_ASSUMPTIONS: Final[dict[str, float | int | str]] = {
     "system_capacity": 100,
@@ -53,6 +55,10 @@ class PVWattsProviderError(ValueError):
         super().__init__("PVWatts provider reported an error")
 
 
+class PVWattsCheckError(RuntimeError):
+    """A safe, operator-facing failure from the explicit connectivity check."""
+
+
 def _reject_non_standard_json_constant(_: str) -> Never:
     raise UnexpectedPVWattsResponse
 
@@ -77,6 +83,44 @@ def request_pvwatts(
         params={**assumptions, "api_key": api_key},
         timeout=PVWATTS_TIMEOUT_SECONDS,
     )
+
+
+def check_pvwatts_connection() -> PVWattsResult:
+    """Validate a fixed-coordinate response without reading or writing Sites."""
+
+    api_key = settings.NLR_API_KEY
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise PVWattsCheckError("NLR_API_KEY not configured")
+
+    try:
+        response = request_pvwatts(
+            assumptions=_assumptions(
+                PVWATTS_CHECK_LATITUDE,
+                PVWATTS_CHECK_LONGITUDE,
+            ),
+            api_key=api_key,
+        )
+    except requests.Timeout:
+        raise PVWattsCheckError(
+            f"PVWatts check timed out after {PVWATTS_TIMEOUT_SECONDS}s"
+        ) from None
+    except requests.ConnectionError:
+        raise PVWattsCheckError("PVWatts check service is unavailable") from None
+    except requests.RequestException:
+        raise PVWattsCheckError("PVWatts check request failed") from None
+
+    if response.status_code == 429:
+        raise PVWattsCheckError("NLR rate limit exceeded - retry in about an hour")
+    if not 200 <= response.status_code < 300:
+        raise PVWattsCheckError(f"PVWatts check returned HTTP {response.status_code}")
+    try:
+        return parse_pvwatts_response(response.text)
+    except PVWattsProviderError:
+        raise PVWattsCheckError("PVWatts check provider reported an error") from None
+    except UnexpectedPVWattsResponse:
+        raise PVWattsCheckError(
+            "PVWatts check returned an unexpected response"
+        ) from None
 
 
 def run_pvwatts(site: Site) -> None:
