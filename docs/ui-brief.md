@@ -46,9 +46,11 @@ table month order match the API without a second definition.
 Dispatch Energy's own palette: white and near-white grounds, near-black text,
 their greys for rules and secondary text, and a single accent — Dispatch green
 `#006400` — for eyebrow labels, links, the success state, map markers,
-selection, progress, and every irradiance data mark. Exactly one thing breaks
-the green: the **PVWatts production bars**, the estimate the app exists to
-produce, are solar orange `#C96A1C`. A status color never carries a data
+selection, and progress. The irradiance data marks use a lighter step of that
+green (`#3E8E4F`), and the collapsed-rail progress bar a lighter `#4E9E62`;
+both stay in the green family. Exactly one thing breaks the green: the
+**PVWatts production bars**, the estimate the app exists to produce, are solar
+orange `#C96A1C`. A status color never carries a data
 series, and the data-mark orange never signals a status. Headings and section
 labels are Poppins tracked wide; cards are flat with 2–3px radii and hairline
 rules, never shadows.
@@ -79,7 +81,7 @@ Measured against the ground `#F7F7F8`.
 | rule, strong | `#C2C2C2` | Stronger separator, input border | — |
 | ink | `#101010` | Primary text | 17.8:1 |
 | muted | `#58595B` | Secondary text | 6.6:1 |
-| faint | `#767676` | Labels ≥10px only | 4.2:1 |
+| faint | `#767676` | Short mono labels and captions | 4.2:1 |
 | Dispatch green | `#006400` | Links, labels, success, markers | 7.0:1 |
 | solar, deep | `#004D00` | Green text / hover / column-hover | 9.5:1 |
 | green, light | `#3E8E4F` | Irradiance data marks | 3.8:1 (graphical) |
@@ -88,6 +90,11 @@ Measured against the ground `#F7F7F8`.
 | status: failed | `#B3261E` | Failure | 6.1:1 |
 
 Grid lines in charts are `#ECECEC`; a stronger baseline sits at `#C2C2C2`.
+
+`faint` sits just under the AA text threshold (4.2:1), so it is reserved for
+short uppercase mono field labels and captions that always sit beside a
+higher-contrast value — never for body copy or a value read on its own. Every
+substantive value uses `ink`, `muted`, or a status color at AA or better.
 
 ### Type
 
@@ -245,6 +252,7 @@ geocoding attribution also appears here.
 | State | Treatment |
 | --- | --- |
 | **Loading** | Skeleton that holds the layout still; the map area names what it waits for (`Loading sites…`). Under reduced motion the spinner becomes a static label. |
+| **Pending** | A stage started with no outcome yet (open-arc chip). On the landing page a mid-import site greys out and reads **processing** with a progress bar in the "Not on the map" group (§3); on the detail page the stage card shows the open-arc `pending` chip and its "started, no outcome yet" line. Never a marker, never a value — pending is not treated as an error. |
 | **Empty catalog** | "No sites yet" — explains that sites arrive through the import command, not this page, and shows the exact `make import` command. No fake "Add site" button the API does not provide. |
 | **Catalog request failed** | "Could not reach the application API" — names the failing request (`GET /api/sites/ · network error`) without leaking keys, query params, or raw exception text; states no data changed; offers **Try again** and **How to start the backend**. |
 | **Site not found** | One response for unknown *and* deactivated IDs — never reveals that an inactive record exists. Offers **Back to all sites**. |
