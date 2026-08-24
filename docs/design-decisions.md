@@ -841,6 +841,7 @@ developer's public contact email:
 ```dotenv
 NLR_API_KEY=get-a-free-key-at-developer.nlr.gov
 CONTACT_EMAIL=ab12095@nyu.edu
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
 ```
 
 The local `.env` is gitignored and copied from the example without being
@@ -855,6 +856,7 @@ Settings then define:
 - `NLR_API_KEY`
 - `NLR_API_BASE`
 - `CONTACT_EMAIL`
+- `NOMINATIM_BASE_URL`
 
 Services import them only from `django.conf.settings`; service modules never
 call `os.getenv`.
@@ -895,6 +897,12 @@ README quickstart:
 `check_external_apis` is an explicit, non-mutating Django management command.
 It is excluded from the automated suite.
 
+Opt-in pytest integration checks exercise the same public provider-check
+interfaces. They are marked `live`, require `--run-live`, and remain skipped
+under normal pytest and push/pull-request CI. A manual GitHub Actions input may
+run them after the required secrets are configured; that input defaults to
+false and no scheduled trigger is permitted.
+
 Nominatim uses its dedicated `/status?format=json` endpoint through the same
 shared session, User-Agent, lock, limiter, and timeout gateway. It passes only
 when HTTP status is 200 and JSON `status` is `0`. A nonzero body status reports
@@ -931,14 +939,15 @@ Automated backend tests use pytest, pytest-django, and pytest-socket. Network
 access is disabled by construction. Provider HTTP calls, the Nominatim clock,
 and sleeping are mocked. Frontend tests mock the shared API client.
 
-Live integration checks run only through the explicit
-`check_external_apis`/`make check-apis` path.
+Live integration checks run only through an explicit path:
+`check_external_apis`/`make check-apis`, or pytest's `live` marker together
+with `--run-live`. Both paths are non-mutating and use production validators.
 
 The README includes:
 
 > Automated tests cannot reach the network by construction (pytest-socket);
 > external services are contacted only by the running application and the
-> explicit check_external_apis command.
+> explicit operator check or opt-in live integration suite.
 
 ### 12.1 Normalization tests
 

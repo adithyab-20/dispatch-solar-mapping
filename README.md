@@ -2,8 +2,9 @@
 
 A local Django and React application for mapping U.S. solar sites and showing
 their Solar Resource and PVWatts results. The current backend includes the Site
-domain, its read-only API, and an idempotent site-import workflow; provider
-workflows beyond geocoding and the frontend are added in later slices.
+domain, its read-only API, and an idempotent site-import workflow with
+geocoding and Solar Resource retrieval; PVWatts and the frontend are added in
+later slices.
 
 ## Backend quickstart
 
@@ -51,12 +52,15 @@ same-name/different-address or same-address/different-name ambiguities are
 reported without preventing other valid rows from being accepted.
 
 After the complete upsert is committed, new records are geocoded sequentially
-through Nominatim while both downstream stages remain `blocked`. The command
-stores resolved coordinates, a clear unresolved outcome, or a safe provider
-failure. Byte-identical addresses share one handled geocoding result during a
-single command run; formatting variants remain separate requests, and the
-cache is discarded when the command exits. Repeating an unchanged import makes
-no provider request.
+through Nominatim. Each resolved site then retrieves Solar Resource V1 data
+from NLR using its coordinates; unresolved and geocoding-failed sites leave
+downstream work `blocked`. Each provider stage commits its pending state before
+I/O and stores either canonical results or a safe, stage-specific failure.
+Byte-identical addresses share one handled geocoding result during a single
+command run, while Solar Resource outcomes are never reused between resolved
+records. Formatting variants remain separate geocoding requests, the cache is
+discarded when the command exits, and repeating an unchanged import makes no
+provider request.
 
 The public Nominatim service is appropriate here only for this small local
 assessment. The importer sends a custom User-Agent, serializes requests, spaces
@@ -64,6 +68,28 @@ request starts by at least 1.1 seconds, and follows the official
 [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 Replace the rows in `data/sites_initial.json` when the authoritative site list
 arrives, then run the same command again.
+
+### Nominatim public-service policy
+
+The public service is donated infrastructure, not a production geocoding
+backend. Its policy sets an absolute maximum of one request per second, requires
+an identifying User-Agent and attribution, discourages periodic or repeated
+searches, and forbids autocomplete and systematic querying. This project keeps
+public-service use deliberately small and replaceable:
+
+| Policy concern | Project control |
+| --- | --- |
+| One request per second maximum | One process-local lock covers the rate gate and HTTP request; starts are at least 1.1 seconds apart. |
+| Identify the application | Every request uses `dispatch-solar-assessment/1.0`; `CONTACT_EMAIL` is included when configured. |
+| Small, single-threaded use | New sites are processed sequentially in one local process. |
+| Cache and avoid repeat searches | One import reuses byte-identical handled results, and unchanged later imports make no request. |
+| No periodic search monitoring | Live checks use Nominatim's dedicated `/status?format=json` endpoint and never submit a search. |
+| No autocomplete or systematic queries | Geocoding occurs only for explicit imports; reads and typing never call Nominatim. |
+| Switch providers without a software release | `NOMINATIM_BASE_URL` can point the shared gateway at another provider or self-hosted instance. |
+
+Do not schedule the public Nominatim check or enable it on routine push or pull
+request CI. Production or higher-volume use must switch to a commercial
+provider or a self-hosted Nominatim instance.
 
 ## Backend verification
 
@@ -80,11 +106,36 @@ uv run python manage.py makemigrations --check --dry-run
 Automated tests cannot reach the network by construction: `pytest-socket` is
 enabled with `--disable-socket` in the checked-in pytest configuration.
 
+### Opt-in live provider integration tests
+
+The live tests are non-mutating and excluded from ordinary pytest runs. One
+test makes exactly one Nominatim status request (not a geocoding search). The
+other makes exactly one Solar Resource V1 request for the documented fixed
+coordinate `40, -105` and validates the response with the production parser.
+
+Configure a real contact email and NLR key in the untracked `.env`, then opt in
+explicitly from `backend/`:
+
+```sh
+uv run pytest sites/tests/live -m live --run-live
+```
+
+Without `--run-live`, both tests are skipped and sockets remain disabled. The
+GitHub Actions live-provider job is likewise disabled for push and pull request
+events. After repository secrets named `CONTACT_EMAIL` and `NLR_API_KEY` are
+configured, it can be run manually through the **Backend CI** workflow by
+selecting **Run the opt-in live Nominatim and NLR integration tests**. The
+checkbox defaults to off.
+
 ## Configuration
 
 `.env.example` documents the provider configuration. Copy it to the untracked
 `.env`; `python-dotenv` loads that repository-root file without overriding
 variables already present in the environment. `CONTACT_EMAIL` is included in
 the Nominatim User-Agent when present; otherwise the importer logs a warning
-and still sends a descriptive application User-Agent. The NLR key is used by
-later provider stages.
+and still sends a descriptive application User-Agent. `NOMINATIM_BASE_URL`
+defaults to the public service and can be changed without modifying source.
+`NLR_API_KEY` is required for Solar Resource retrieval; when it is absent,
+resolved sites retain a safe stage-specific configuration failure without
+making an NLR request. The NLR developer APIs allow 1,000 requests per hour per
+key by default.

@@ -10,9 +10,80 @@ from django.db import connection
 from pytest_django.fixtures import Settings
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
+from sites.services import geocoding
 from sites.services.geocoding import NOMINATIM_GATEWAY, NominatimGateway, geocode_site
 
 pytestmark = pytest.mark.usefixtures("isolated_nominatim_gateway")
+
+
+def test_nominatim_status_check_uses_the_policy_controlled_gateway(
+    settings: Settings,
+    isolated_nominatim_gateway: NominatimGateway,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings.CONTACT_EMAIL = "solar@example.com"
+    settings.NOMINATIM_BASE_URL = "https://nominatim.example.test/"
+    http_get = Mock(
+        return_value=Mock(
+            status_code=200,
+            text=json.dumps({"status": 0, "message": "OK"}),
+        )
+    )
+    monkeypatch.setattr(isolated_nominatim_gateway.session, "get", http_get)
+
+    result = geocoding.check_nominatim_status()
+
+    assert result.status == 0
+    assert result.message == "OK"
+    http_get.assert_called_once_with(
+        "https://nominatim.example.test/status",
+        params={"format": "json"},
+        headers={
+            "User-Agent": (
+                "dispatch-solar-assessment/1.0 (interview take-home; solar@example.com)"
+            )
+        },
+        timeout=10,
+    )
+
+
+@pytest.mark.parametrize(
+    ("response", "expected_error"),
+    [
+        pytest.param(
+            Mock(status_code=503, text="provider body"),
+            "Nominatim status returned HTTP 503",
+            id="non-success-http",
+        ),
+        pytest.param(
+            Mock(
+                status_code=200,
+                text=json.dumps({"status": 1, "message": "Database unavailable"}),
+            ),
+            "Nominatim reported an unhealthy status: Database unavailable",
+            id="unhealthy-body-status",
+        ),
+        pytest.param(
+            Mock(status_code=200, text="{not json"),
+            "Nominatim status returned an unexpected response",
+            id="malformed-json",
+        ),
+    ],
+)
+def test_nominatim_status_check_rejects_unhealthy_or_invalid_responses(
+    response: Mock,
+    expected_error: str,
+    isolated_nominatim_gateway: NominatimGateway,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        isolated_nominatim_gateway.session,
+        "get",
+        Mock(return_value=response),
+    )
+
+    with pytest.raises(geocoding.NominatimStatusCheckError, match=expected_error):
+        geocoding.check_nominatim_status()
 
 
 @pytest.mark.django_db(transaction=True)
@@ -69,7 +140,9 @@ def test_import_resolves_a_new_site_after_reconciliation_commits(
     assert site.resolved_address == "121 North LaSalle Street, Chicago, Illinois"
     assert site.geocode_error is None
     assert site.geocode_attempted_at is not None
-    assert site.solar_resource_status == ProcessingStatus.BLOCKED
+    assert site.solar_resource_status == ProcessingStatus.FAILED
+    assert site.solar_resource_error == "NLR_API_KEY not configured"
+    assert site.solar_resource_attempted_at is not None
     assert site.pvwatts_status == ProcessingStatus.BLOCKED
     http_get.assert_called_once_with(
         "https://nominatim.openstreetmap.org/search",
