@@ -27,8 +27,7 @@ backend:
 frontend:
 	cd frontend && bun run dev
 
-# Preserve the original authoritative sample-import target for compatibility.
-import: import-sync
+import: import-upsert
 
 import-upsert:
 	cd backend && uv run python manage.py import_sites "$(abspath $(SITES_FILE))" --mode upsert

@@ -133,9 +133,8 @@ Each row has this shape:
 }
 ```
 
-`make import` remains a compatibility alias for the original authoritative
-`import-sync` behavior. Prefer the explicit target so the deactivation behavior
-is visible at the call site.
+`make import` is a compatibility alias for the safe, additive `import-upsert`
+behavior. Authoritative replacement is always explicit as `make import-sync`.
 
 ## Architecture
 

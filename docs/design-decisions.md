@@ -880,7 +880,7 @@ A repository-root Makefile provides:
 - `make import-upsert`: add/reactivate rows from `data/sites_initial.json`.
 - `make import-sync`: make `data/sites_initial.json` the authoritative active
   set.
-- `make import`: compatibility alias for `make import-sync`.
+- `make import`: compatibility alias for the additive `make import-upsert`.
 - `make backend`: run Django's development server in terminal 1.
 - `make frontend`: run Next.js through Bun in terminal 2.
 - `make verify`: run backend tests/static checks and frontend tests/lint/type
