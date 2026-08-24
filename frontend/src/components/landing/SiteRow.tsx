@@ -80,36 +80,12 @@ function CautionGlyph({ note }: { note: string }) {
   );
 }
 
-/**
- * One catalogue entry — a single link to the detail route (UI brief §8). A
- * mapped row shows name, address, coordinates, annual AC production with its
- * sparkline, and — on hover, focus, or map highlight — the irradiance line. A
- * mapped row missing a result carries a caution glyph and names what is
- * missing; an unmapped row shows only identity plus its status word.
- */
-export function SiteRow({
-  site,
-  highlighted = false,
-  onHighlight,
-}: {
-  site: SiteListItem;
-  highlighted?: boolean;
-  onHighlight?: (id: number | null) => void;
-}) {
+function RowInner({ site }: { site: SiteListItem }) {
   const hasCoords = hasCoordinates(site);
   const note = isMappable(site) ? missingResultNote(site) : null;
   const acSeries = monthlyAcSeries(site);
   return (
-    <TransitionLink
-      href={`/sites/${site.id}`}
-      direction="forward"
-      className={`site-row${highlighted ? " is-highlighted" : ""}`}
-      data-site-row={site.id}
-      onMouseEnter={() => onHighlight?.(site.id)}
-      onMouseLeave={() => onHighlight?.(null)}
-      onFocus={() => onHighlight?.(site.id)}
-      onBlur={() => onHighlight?.(null)}
-    >
+    <>
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -157,6 +133,68 @@ export function SiteRow({
         </div>
       </div>
       <IrradianceLine site={site} />
+    </>
+  );
+}
+
+/**
+ * One catalogue entry — a single link to the detail route (UI brief §8). A
+ * mapped row shows name, address, coordinates, annual AC production with its
+ * sparkline, and — on hover, focus, or map highlight — the irradiance line. A
+ * mapped row missing a result carries a caution glyph and names what is
+ * missing; an unmapped row shows only identity plus its status word.
+ *
+ * In select mode the row stops navigating and becomes a checkbox toggle so
+ * operators can pick sites to deactivate.
+ */
+export function SiteRow({
+  site,
+  highlighted = false,
+  onHighlight,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: {
+  site: SiteListItem;
+  highlighted?: boolean;
+  onHighlight?: (id: number | null) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
+}) {
+  if (selectable) {
+    return (
+      <label
+        className={`site-row is-selectable${selected ? " is-selected" : ""}`}
+        data-site-row={site.id}
+      >
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <input
+            type="checkbox"
+            className="site-row-check"
+            checked={selected}
+            onChange={() => onToggleSelect?.(site.id)}
+            aria-label={`Select ${site.name}`}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <RowInner site={site} />
+          </div>
+        </div>
+      </label>
+    );
+  }
+  return (
+    <TransitionLink
+      href={`/sites/${site.id}`}
+      direction="forward"
+      className={`site-row${highlighted ? " is-highlighted" : ""}`}
+      data-site-row={site.id}
+      onMouseEnter={() => onHighlight?.(site.id)}
+      onMouseLeave={() => onHighlight?.(null)}
+      onFocus={() => onHighlight?.(site.id)}
+      onBlur={() => onHighlight?.(null)}
+    >
+      <RowInner site={site} />
     </TransitionLink>
   );
 }

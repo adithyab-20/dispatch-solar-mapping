@@ -9,10 +9,8 @@ from sites.services.importing import (
     ImportNoticeKind,
     SyncResult,
     UpsertResult,
-    sync_sites,
-    upsert_sites,
 )
-from sites.services.workflow import process_new_sites
+from sites.services.workflow import apply_import
 
 
 class Command(BaseCommand):
@@ -39,14 +37,10 @@ class Command(BaseCommand):
             raise CommandError("The top level must be a JSON array.")
 
         result: SyncResult | UpsertResult
-        if options["mode"] == "sync":
-            try:
-                result = sync_sites(rows)
-            except ValueError as error:
-                raise CommandError(f"Sync aborted: {error}.") from error
-        else:
-            result = upsert_sites(rows)
-        process_new_sites(result.created_site_ids)
+        try:
+            result = apply_import(rows, options["mode"])
+        except ValueError as error:
+            raise CommandError(f"Sync aborted: {error}.") from error
         for notice in result.notices:
             style = (
                 self.style.ERROR

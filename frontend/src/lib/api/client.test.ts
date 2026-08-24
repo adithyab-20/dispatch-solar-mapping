@@ -136,3 +136,38 @@ describe("apiClient site mutations", () => {
     });
   });
 });
+
+describe("apiClient list management", () => {
+  it("posts an upsert import with the rows as JSON", async () => {
+    const result = { summary: "Import complete", created_count: 1 };
+    const fetchMock = mockFetchOnce({ json: async () => result });
+    const rows = [{ name: "New", address: "1 New St" }];
+
+    const returned = await apiClient.importSites(rows);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/sites/import/",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "upsert", sites: rows }),
+        headers: expect.objectContaining({ "Content-Type": "application/json" }),
+      }),
+    );
+    expect(returned).toEqual(result);
+  });
+
+  it("posts a deactivation with the selected ids", async () => {
+    const fetchMock = mockFetchOnce({ json: async () => ({ deactivated_count: 2 }) });
+
+    const returned = await apiClient.deactivateSites([7, 9]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/sites/deactivate/",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ ids: [7, 9] }),
+      }),
+    );
+    expect(returned).toEqual({ deactivated_count: 2 });
+  });
+});

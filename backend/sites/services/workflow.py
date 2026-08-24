@@ -1,9 +1,18 @@
 from collections.abc import Callable, Iterable
+from typing import Literal
 
 from sites.models import GeocodeStatus, ProcessingStatus, Site
 from sites.services.geocoding import GeocodingOutcome, geocode_site
+from sites.services.importing import (
+    SyncResult,
+    UpsertResult,
+    sync_sites,
+    upsert_sites,
+)
 from sites.services.pvwatts import run_pvwatts
 from sites.services.solar_resource import fetch_solar_resource
+
+ImportMode = Literal["upsert", "sync"]
 
 LOCATION_FIELDS = (
     "geocode_status",
@@ -109,3 +118,21 @@ def process_new_sites(site_ids: tuple[int, ...]) -> None:
             cached_geocoding_outcome=outcomes_by_address.get(site.address),
         )
         outcomes_by_address[site.address] = outcome
+
+
+def apply_import(rows: list[object], mode: ImportMode) -> SyncResult | UpsertResult:
+    """Reconcile the site lifecycle for an import, then process new sites.
+
+    The single import path shared by the ``import_sites`` command and the
+    ``/api/sites/import/`` endpoint. ``sync`` raises ``ValueError`` on an invalid
+    row before any lifecycle change; callers translate that into their own error
+    surface. Only genuinely new sites reach the provider pipeline.
+    """
+
+    result: SyncResult | UpsertResult
+    if mode == "sync":
+        result = sync_sites(rows)
+    else:
+        result = upsert_sites(rows)
+    process_new_sites(result.created_site_ids)
+    return result

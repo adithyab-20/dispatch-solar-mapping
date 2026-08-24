@@ -49,21 +49,23 @@ def test_admin_bulk_lifecycle_actions_preserve_provider_state(
 
 
 @pytest.mark.django_db
-def test_admin_does_not_offer_hard_deletion() -> None:
+def test_admin_offers_hard_deletion_for_full_control() -> None:
     user = get_user_model().objects.create_superuser(
         username="operator", password="password", email="operator@example.com"
     )
-    site = Site.objects.create(name="Historical Site", address="1 Archive Way")
+    site = Site.objects.create(name="Doomed Site", address="1 Archive Way")
     client = Client()
     client.force_login(user)
 
     changelist = client.get("/admin/sites/site/")
-    delete = client.post(f"/admin/sites/site/{site.pk}/delete/")
+    action_names = [
+        name for name, _ in changelist.context["action_form"].fields["action"].choices
+    ]
+    delete = client.post(
+        f"/admin/sites/site/{site.pk}/delete/", {"post": "yes"}, follow=True
+    )
 
     assert changelist.status_code == 200
-    assert (
-        "delete_selected"
-        not in changelist.context["action_form"].fields["action"].choices
-    )
-    assert delete.status_code == 403
-    assert Site.objects.filter(pk=site.pk).exists()
+    assert "delete_selected" in action_names
+    assert delete.status_code == 200
+    assert not Site.objects.filter(pk=site.pk).exists()

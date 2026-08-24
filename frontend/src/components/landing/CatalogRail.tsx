@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SiteRow } from "@/components/landing/SiteRow";
+import { ApiError, ERROR_KIND_PHRASE, apiClient } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites, unmappedSummary } from "@/lib/sites";
 
@@ -10,18 +11,21 @@ import { partitionSites, unmappedSummary } from "@/lib/sites";
  * The catalogue: every active site, grouped into "On the map" (resolved, has a
  * marker) and a collapsible "Not on the map" (pending, no-match, failed). Both
  * groups keep the server's import order; nothing here is sorted or filtered.
- * Highlighting a map marker scrolls its row into view here.
+ * Highlighting a map marker scrolls its row into view here. Select mode adds
+ * per-row checkboxes and a footer to deactivate the chosen sites.
  */
 export function CatalogRail({
   sites,
   highlightedId,
   onHighlight,
   onCollapse,
+  onReload,
 }: {
   sites: SiteListItem[];
   highlightedId: number | null;
   onHighlight: (id: number | null) => void;
   onCollapse: () => void;
+  onReload: () => void;
 }) {
   const { mapped, unmapped } = partitionSites(sites);
   // The folded group opens itself when every remaining site is in it (UI brief §3),
@@ -29,12 +33,59 @@ export function CatalogRail({
   const [unmappedOpen, setUnmappedOpen] = useState(mapped.length === 0);
   const railRef = useRef<HTMLDivElement>(null);
 
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const exitSelect = useCallback(() => {
+    setSelecting(false);
+    setSelectedIds(new Set());
+    setConfirming(false);
+    setError(null);
+  }, []);
+
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setConfirming(false);
+  }, []);
+
+  const deactivate = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    try {
+      await apiClient.deactivateSites([...selectedIds]);
+      exitSelect();
+      onReload();
+    } catch (caught) {
+      const kind = caught instanceof ApiError ? ERROR_KIND_PHRASE[caught.kind] : "network error";
+      setError(`Could not deactivate the selected sites (${kind}).`);
+    } finally {
+      setPending(false);
+    }
+  }, [exitSelect, onReload, selectedIds]);
+
   useEffect(() => {
     if (highlightedId === null) return;
     railRef.current
       ?.querySelector(`[data-site-row="${highlightedId}"]`)
       ?.scrollIntoView?.({ block: "nearest" });
   }, [highlightedId]);
+
+  const rowProps = (site: SiteListItem) =>
+    selecting
+      ? {
+          selectable: true as const,
+          selected: selectedIds.has(site.id),
+          onToggleSelect: toggleSelect,
+        }
+      : { highlighted: site.id === highlightedId, onHighlight };
 
   return (
     <div
@@ -50,29 +101,35 @@ export function CatalogRail({
                 {mapped.length}
               </span>
             </div>
-            <button
-              type="button"
-              className="btn rail-toggle-control"
-              aria-label="Collapse the site list"
-              onClick={onCollapse}
-            >
-              <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
-                <path d="M8.5 3L4.5 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M11.5 3v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                className="btn"
+                style={{ height: 34, padding: "0 12px" }}
+                aria-pressed={selecting}
+                onClick={() => (selecting ? exitSelect() : setSelecting(true))}
+              >
+                {selecting ? "Cancel" : "Select"}
+              </button>
+              <button
+                type="button"
+                className="btn rail-toggle-control"
+                aria-label="Collapse the site list"
+                onClick={onCollapse}
+              >
+                <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+                  <path d="M8.5 3L4.5 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M11.5 3v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           </div>
           <p style={{ margin: "8px 0 0", fontSize: 11.5, color: "var(--muted)" }}>
             Active sites with resolved coordinates. Ordered as imported.
           </p>
         </div>
         {mapped.map((site) => (
-          <SiteRow
-            key={site.id}
-            site={site}
-            highlighted={site.id === highlightedId}
-            onHighlight={onHighlight}
-          />
+          <SiteRow key={site.id} site={site} {...rowProps(site)} />
         ))}
       </section>
 
@@ -126,16 +183,54 @@ export function CatalogRail({
         {unmappedOpen && unmapped.length > 0 ? (
           <div style={{ background: "var(--panel)" }}>
             {unmapped.map((site) => (
-              <SiteRow
-                key={site.id}
-                site={site}
-                highlighted={site.id === highlightedId}
-                onHighlight={onHighlight}
-              />
+              <SiteRow key={site.id} site={site} {...rowProps(site)} />
             ))}
           </div>
         ) : null}
       </section>
+
+      {selecting ? (
+        <div className="rail-action-bar">
+          {error ? (
+            <span className="rail-action-error" role="alert">
+              {error}
+            </span>
+          ) : (
+            <span className="rail-action-count">
+              {selectedIds.size} selected
+            </span>
+          )}
+          {confirming ? (
+            <>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setConfirming(false)}
+                disabled={pending}
+              >
+                Keep
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => void deactivate()}
+                disabled={pending}
+              >
+                {pending ? "Deactivating…" : `Deactivate ${selectedIds.size}`}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => setConfirming(true)}
+              disabled={selectedIds.size === 0}
+            >
+              Deactivate
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
