@@ -102,6 +102,17 @@ class FailureCase:
     request_error: requests.RequestException | None = None
 
 
+def mutable_metric_payload(
+    metric_name: str,
+) -> tuple[dict[str, object], dict[object, object]]:
+    payload = deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)
+    outputs = payload["outputs"]
+    assert isinstance(outputs, dict)
+    metric = outputs[metric_name]
+    assert isinstance(metric, dict)
+    return payload, metric
+
+
 def payload_with_metric_value(
     metric_name: str,
     section: str,
@@ -109,11 +120,7 @@ def payload_with_metric_value(
     *,
     month: str | None = None,
 ) -> str:
-    payload = deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)
-    outputs = payload["outputs"]
-    assert isinstance(outputs, dict)
-    metric = outputs[metric_name]
-    assert isinstance(metric, dict)
+    payload, metric = mutable_metric_payload(metric_name)
     if section == "annual":
         metric["annual"] = value
     else:
@@ -125,11 +132,7 @@ def payload_with_metric_value(
 
 
 def payload_without_month(metric_name: str, month: str) -> str:
-    payload = deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)
-    outputs = payload["outputs"]
-    assert isinstance(outputs, dict)
-    metric = outputs[metric_name]
-    assert isinstance(metric, dict)
+    payload, metric = mutable_metric_payload(metric_name)
     monthly = metric["monthly"]
     assert isinstance(monthly, dict)
     monthly.pop(month)
@@ -137,11 +140,7 @@ def payload_without_month(metric_name: str, month: str) -> str:
 
 
 def payload_without_metric_field(metric_name: str, field: str) -> str:
-    payload = deepcopy(VALID_SOLAR_RESOURCE_PAYLOAD)
-    outputs = payload["outputs"]
-    assert isinstance(outputs, dict)
-    metric = outputs[metric_name]
-    assert isinstance(metric, dict)
+    payload, metric = mutable_metric_payload(metric_name)
     metric.pop(field)
     return json.dumps(payload)
 
