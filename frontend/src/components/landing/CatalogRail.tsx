@@ -27,7 +27,7 @@ export function CatalogRail({
   // The folded group opens itself when every remaining site is in it (UI brief §3),
   // and when a highlighted marker's row would otherwise be hidden inside it.
   const [unmappedOpen, setUnmappedOpen] = useState(mapped.length === 0);
-  const railRef = useRef<HTMLElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (highlightedId === null) return;
@@ -37,18 +37,9 @@ export function CatalogRail({
   }, [highlightedId]);
 
   return (
-    <aside
+    <div
       ref={railRef}
-      aria-label="Site catalogue"
-      className="catalog-rail"
-      style={{
-        background: "var(--panel)",
-        borderRight: "1px solid var(--rule-strong)",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 0,
-        overflowY: "auto",
-      }}
+      className="catalog-rail-content"
     >
       <section aria-label="On the map">
         <div style={{ padding: "15px 18px 12px" }}>
@@ -61,8 +52,7 @@ export function CatalogRail({
             </div>
             <button
               type="button"
-              className="btn"
-              style={{ padding: "5px 8px", borderColor: "var(--rule)" }}
+              className="btn rail-toggle-control"
               aria-label="Collapse the site list"
               onClick={onCollapse}
             >
@@ -146,6 +136,6 @@ export function CatalogRail({
           </div>
         ) : null}
       </section>
-    </aside>
+    </div>
   );
 }

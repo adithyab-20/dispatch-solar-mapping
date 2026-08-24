@@ -1,14 +1,12 @@
 import { TransitionLink } from "@/components/TransitionLink";
 import type { ProcessingStatus, SiteDetail } from "@/lib/api/types";
 import {
-  fmt,
   formatAssumptions,
-  formatCoordinates,
-  formatTimestamp,
   geocodeChip,
   monthLabel,
   orderMonthly,
 } from "@/lib/detail";
+import { fmt, formatCoordinates, formatTimestamp } from "@/lib/format";
 import { MiniChart } from "@/components/detail/MiniChart";
 import { MonthlyChart } from "@/components/detail/MonthlyChart";
 import { MonthTable, type MonthTableRow } from "@/components/detail/MonthTable";
@@ -29,19 +27,32 @@ function SectionTitle({ title, note, color }: { title: string; note?: string; co
   );
 }
 
-/** Header: back link, display name, and a `Site #N · active` sublabel. */
-export function DetailHeader({ site }: { site: SiteDetail }) {
+/** Header: identity plus the site editing action. */
+export function DetailHeader({
+  site,
+  onEdit,
+  disabled,
+}: {
+  site: SiteDetail;
+  onEdit: () => void;
+  disabled: boolean;
+}) {
   return (
     <div style={{ padding: "18px 24px 16px", background: "var(--panel)", borderBottom: "1px solid var(--rule)" }}>
       <TransitionLink href="/" direction="back" style={{ fontSize: 12, color: "var(--muted)" }}>
         ← All sites
       </TransitionLink>
-      <div style={{ marginTop: 8 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-.01em" }}>{site.name}</h1>
-        <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
-          {/* Only active sites ever reach this view (DetailView 404s the rest). */}
-          Site #{site.id} · active
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginTop: 8 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: "-.01em" }}>{site.name}</h1>
+          <div className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+            {/* Only active sites ever reach this view (DetailView 404s the rest). */}
+            Site #{site.id} · active
+          </div>
         </div>
+        <button className="btn" type="button" onClick={onEdit} disabled={disabled}>
+          Edit name or address
+        </button>
       </div>
     </div>
   );

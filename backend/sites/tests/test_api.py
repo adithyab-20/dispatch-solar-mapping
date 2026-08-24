@@ -237,17 +237,16 @@ def test_inactive_site_detail_is_not_exposed() -> None:
 
 
 @pytest.mark.django_db
-def test_site_endpoints_are_read_only() -> None:
-    site = Site.objects.create(name="Read Only Solar", address="1 Stable Way")
+def test_get_endpoints_and_unsupported_methods_do_not_mutate() -> None:
+    site = Site.objects.create(name="Stable Solar", address="1 Stable Way")
     original_updated_at = site.updated_at
     client = APIClient()
 
     assert client.get("/api/sites/").status_code == 200
     assert client.get(f"/api/sites/{site.id}/").status_code == 200
     assert client.post("/api/sites/", {}).status_code == 405
-    assert (
-        client.patch(f"/api/sites/{site.id}/", {"name": "Changed"}).status_code == 405
-    )
+    assert client.put(f"/api/sites/{site.id}/", {"name": "Changed"}).status_code == 405
+    assert client.delete(f"/api/sites/{site.id}/").status_code == 405
 
     site.refresh_from_db()
     assert site.updated_at == original_updated_at

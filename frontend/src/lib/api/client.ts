@@ -15,12 +15,14 @@ export type ApiErrorKind = "network" | "http" | "parse";
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status?: number;
+  readonly payload?: unknown;
 
-  constructor(kind: ApiErrorKind, status?: number) {
+  constructor(kind: ApiErrorKind, status?: number, payload?: unknown) {
     super(`API request failed (${kind}${status ? ` ${status}` : ""})`);
     this.name = "ApiError";
     this.kind = kind;
     this.status = status;
+    this.payload = payload;
   }
 }
 
@@ -47,18 +49,29 @@ export const ERROR_KIND_PHRASE: Record<ApiErrorKind, string> = {
   parse: "unexpected response",
 };
 
-async function getJson<T>(path: string): Promise<T> {
+async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path}`, {
-      headers: { Accept: "application/json" },
+      ...init,
+      headers: {
+        Accept: "application/json",
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...init?.headers,
+      },
     });
   } catch {
     throw new ApiError("network");
   }
 
   if (!response.ok) {
-    throw new ApiError("http", response.status);
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = undefined;
+    }
+    throw new ApiError("http", response.status, payload);
   }
 
   try {
@@ -71,12 +84,52 @@ async function getJson<T>(path: string): Promise<T> {
 export const apiClient = {
   /** `GET /api/sites/` — the active-site catalogue for the landing page. */
   fetchSites(): Promise<SiteListItem[]> {
-    return getJson<SiteListItem[]>("/sites/");
+    return requestJson<SiteListItem[]>("/sites/");
   },
   /** `GET /api/sites/{id}/` — the complete stored state for one active site. */
   fetchSite(id: number): Promise<SiteDetail> {
-    return getJson<SiteDetail>(`/sites/${id}/`);
+    return requestJson<SiteDetail>(`/sites/${id}/`);
+  },
+  /** Edit display identity; meaningful address changes reprocess synchronously. */
+  updateSite(id: number, input: SitePatchInput): Promise<SiteDetail> {
+    return requestJson<SiteDetail>(`/sites/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+  },
+  /** Destructively clear location-dependent state and rerun the full workflow. */
+  refreshGeocoding(id: number): Promise<SiteDetail> {
+    return requestJson<SiteDetail>(`/sites/${id}/geocode/`, { method: "POST" });
+  },
+  /** Clear and retry Solar Resource without touching PVWatts. */
+  refreshSolarResource(id: number): Promise<SiteDetail> {
+    return requestJson<SiteDetail>(`/sites/${id}/solar-resource/`, { method: "POST" });
+  },
+  /** Clear and retry PVWatts without touching Solar Resource. */
+  refreshPvwatts(id: number): Promise<SiteDetail> {
+    return requestJson<SiteDetail>(`/sites/${id}/pvwatts/`, { method: "POST" });
   },
 };
+
+export interface SitePatchInput {
+  name?: string;
+  address?: string;
+}
+
+export interface PatchValidationPayload {
+  detail: string;
+  errors: Record<string, string[]>;
+}
+
+export interface SiteConflictPayload {
+  detail: string;
+  conflict_site_id: number;
+  conflict_is_active: boolean;
+}
+
+export interface RefreshConflictPayload {
+  detail: string;
+  geocode_status: string;
+}
 
 export type ApiClient = typeof apiClient;

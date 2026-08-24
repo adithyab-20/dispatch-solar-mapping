@@ -4,9 +4,8 @@ import { useEffect } from "react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { latLngBounds } from "leaflet";
 
-import { TransitionLink } from "@/components/TransitionLink";
 import type { SiteListItem } from "@/lib/api/types";
-import { fmt } from "@/lib/detail";
+import { fmt } from "@/lib/format";
 import { hasCoordinates } from "@/lib/sites";
 
 // Continental-US default view, used until (or unless) markers set the bounds.
@@ -43,7 +42,24 @@ function ResizeForRail({ layoutSignal }: { layoutSignal: number }) {
   return null;
 }
 
-/** The floating callout: identity, annual AC, irradiance, and the detail link. */
+function ResizeWithContainer() {
+  const map = useMap();
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+
+    // A rail transition changes the map by a few pixels per frame. Following
+    // the container throughout that motion keeps Leaflet's canvas and tiles in
+    // lockstep instead of snapping once at the beginning or end.
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false, pan: false });
+    });
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
+}
+
+/** The floating callout: identity, annual AC, irradiance, and click guidance. */
 function MarkerCallout({ site }: { site: SiteListItem }) {
   const irr: Array<[string, number | null]> = [
     ["GHI", site.annual_ghi_kwh_m2_day],
@@ -52,7 +68,7 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
   ];
   const hasIrr = irr.some(([, v]) => v !== null);
   return (
-    <div style={{ width: 230 }}>
+    <div style={{ width: 290 }}>
       <div style={{ fontSize: 13, fontWeight: 600 }}>{site.name}</div>
       <div className="mono" style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 3 }}>
         {site.address}
@@ -80,21 +96,17 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
         ) : (
           <span style={{ fontSize: 11, color: "var(--muted)" }}>No production estimate yet</span>
         )}
-        <TransitionLink
-          href={`/sites/${site.id}`}
-          direction="forward"
-          style={{ fontSize: 12, color: "var(--solar)", fontWeight: 500 }}
-        >
-          Open detail →
-        </TransitionLink>
+        <span className="mono" style={{ fontSize: 9.5, color: "var(--muted)" }}>
+          Click marker to open details
+        </span>
       </div>
       {hasIrr ? (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, max-content)",
-            columnGap: 12,
-            rowGap: 5,
+            display: "flex",
+            alignItems: "baseline",
+            gap: 12,
+            flexWrap: "nowrap",
             marginTop: 8,
             paddingTop: 8,
             borderTop: "1px solid var(--rule)",
@@ -112,7 +124,7 @@ function MarkerCallout({ site }: { site: SiteListItem }) {
           )}
           <span
             className="unit"
-            style={{ fontSize: 9.5, gridColumn: "1 / -1", justifySelf: "end", whiteSpace: "nowrap" }}
+            style={{ fontSize: 9.5, marginLeft: "auto", whiteSpace: "nowrap" }}
           >
             kWh/m²/day
           </span>
@@ -185,13 +197,14 @@ export function SiteMap({
                 },
               }}
             >
-              <Popup autoPan={false} closeButton={false}>
+              <Popup autoPan={false} closeButton={false} minWidth={290} maxWidth={360}>
                 <MarkerCallout site={site} />
               </Popup>
             </CircleMarker>
           );
         })}
         <FitToSites coordinateKey={coordinateKey} />
+        <ResizeWithContainer />
         <ResizeForRail layoutSignal={layoutSignal} />
       </MapContainer>
 

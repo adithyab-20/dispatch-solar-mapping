@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AppBar } from "@/components/AppBar";
 import { CatalogRail } from "@/components/landing/CatalogRail";
 import { MapPanel } from "@/components/landing/MapPanel";
+import { useRailState } from "@/components/landing/RailState";
 import { RailSpine } from "@/components/landing/RailSpine";
 import { EmptyState, ErrorState, LoadingState } from "@/components/landing/states";
 import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
@@ -25,9 +26,9 @@ type View =
  */
 export function LandingView() {
   const router = useRouter();
+  const { collapsed, setCollapsed } = useRailState();
   const [view, setView] = useState<View>({ phase: "loading" });
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
   // Bumped whenever the rail opens or closes so Leaflet re-measures its canvas
   // without changing the user's zoom or center.
   const [layoutSignal, setLayoutSignal] = useState(0);
@@ -51,7 +52,7 @@ export function LandingView() {
     setCollapsed((value) => !value);
     setHighlightedId(null);
     setLayoutSignal((n) => n + 1);
-  }, []);
+  }, [setCollapsed]);
 
   const openDetail = useCallback((id: number) => {
     startPageTransition("forward", () => router.push(`/sites/${id}`));
@@ -107,22 +108,24 @@ function renderBody(view: View, retry: () => void, rail: RailState) {
   const { mapped, unmapped } = partitionSites(view.sites);
   return (
     <div className="landing-split">
-      {rail.collapsed ? (
-        <RailSpine
-          sites={view.sites}
-          highlightedId={rail.highlightedId}
-          onExpand={rail.toggleRail}
-          onHighlight={rail.onHighlight}
-          onOpenDetail={rail.onOpenDetail}
-        />
-      ) : (
-        <CatalogRail
-          sites={view.sites}
-          highlightedId={rail.highlightedId}
-          onHighlight={rail.onHighlight}
-          onCollapse={rail.toggleRail}
-        />
-      )}
+      <aside
+        aria-label={rail.collapsed ? "Site catalogue, collapsed" : "Site catalogue"}
+        className={`catalog-rail${rail.collapsed ? " is-collapsed" : ""}`}
+      >
+        <div
+          className="catalog-rail-viewport"
+          aria-hidden={rail.collapsed}
+          inert={rail.collapsed ? true : undefined}
+        >
+          <CatalogRail
+            sites={view.sites}
+            highlightedId={rail.highlightedId}
+            onHighlight={rail.onHighlight}
+            onCollapse={rail.toggleRail}
+          />
+        </div>
+        {rail.collapsed ? <RailSpine onExpand={rail.toggleRail} /> : null}
+      </aside>
       <div className="map-panel">
         <MapPanel
           sites={mapped}
