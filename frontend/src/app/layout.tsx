@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dispatch Solar Mapping",
+  title: "Dispatch Energy Solar",
   description: "U.S. solar sites, their geocoding state, and their solar results.",
 };
 
