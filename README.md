@@ -3,8 +3,8 @@
 A local Django and React application for mapping U.S. solar sites and showing
 their Solar Resource and PVWatts results. The current backend includes the Site
 domain, its read-only API, and an idempotent site-import workflow with
-geocoding and Solar Resource retrieval; PVWatts and the frontend are added in
-later slices.
+geocoding, Solar Resource retrieval, and PVWatts V8 estimates; the frontend is
+added in a later slice.
 
 ## Backend quickstart
 
@@ -52,15 +52,17 @@ same-name/different-address or same-address/different-name ambiguities are
 reported without preventing other valid rows from being accepted.
 
 After the complete upsert is committed, new records are geocoded sequentially
-through Nominatim. Each resolved site then retrieves Solar Resource V1 data
-from NLR using its coordinates; unresolved and geocoding-failed sites leave
-downstream work `blocked`. Each provider stage commits its pending state before
-I/O and stores either canonical results or a safe, stage-specific failure.
+through Nominatim. Each resolved site then independently retrieves Solar
+Resource V1 data and runs a standardized PVWatts V8 estimate through NLR using
+its coordinates. A handled Solar Resource failure does not prevent PVWatts
+from running; unresolved and geocoding-failed sites leave both downstream
+stages `blocked`. Each provider stage commits its pending state before I/O and
+stores either canonical results or a safe, stage-specific failure.
 Byte-identical addresses share one handled geocoding result during a single
-command run, while Solar Resource outcomes are never reused between resolved
-records. Formatting variants remain separate geocoding requests, the cache is
-discarded when the command exits, and repeating an unchanged import makes no
-provider request.
+command run, while Solar Resource and PVWatts outcomes are never reused between
+resolved records. Formatting variants remain separate geocoding requests, the
+cache is discarded when the command exits, and repeating an unchanged import
+makes no provider request.
 
 The public Nominatim service is appropriate here only for this small local
 assessment. The importer sends a custom User-Agent, serializes requests, spaces
@@ -135,7 +137,7 @@ variables already present in the environment. `CONTACT_EMAIL` is included in
 the Nominatim User-Agent when present; otherwise the importer logs a warning
 and still sends a descriptive application User-Agent. `NOMINATIM_BASE_URL`
 defaults to the public service and can be changed without modifying source.
-`NLR_API_KEY` is required for Solar Resource retrieval; when it is absent,
-resolved sites retain a safe stage-specific configuration failure without
+`NLR_API_KEY` is required for both Solar Resource and PVWatts; when it is absent,
+resolved sites retain a safe configuration failure for each stage without
 making an NLR request. The NLR developer APIs allow 1,000 requests per hour per
 key by default.

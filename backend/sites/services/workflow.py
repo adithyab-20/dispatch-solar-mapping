@@ -1,5 +1,6 @@
 from sites.models import GeocodeStatus, Site
 from sites.services.geocoding import GeocodingOutcome, geocode_site
+from sites.services.pvwatts import run_pvwatts
 from sites.services.solar_resource import fetch_solar_resource
 
 
@@ -14,3 +15,4 @@ def process_new_sites(site_ids: tuple[int, ...]) -> None:
         outcomes_by_address[site.address] = outcome
         if outcome.status == GeocodeStatus.RESOLVED:
             fetch_solar_resource(site)
+            run_pvwatts(site)

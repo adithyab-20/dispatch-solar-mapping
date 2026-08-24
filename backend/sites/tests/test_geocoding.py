@@ -143,7 +143,9 @@ def test_import_resolves_a_new_site_after_reconciliation_commits(
     assert site.solar_resource_status == ProcessingStatus.FAILED
     assert site.solar_resource_error == "NLR_API_KEY not configured"
     assert site.solar_resource_attempted_at is not None
-    assert site.pvwatts_status == ProcessingStatus.BLOCKED
+    assert site.pvwatts_status == ProcessingStatus.FAILED
+    assert site.pvwatts_error == "NLR_API_KEY not configured"
+    assert site.pvwatts_attempted_at is not None
     http_get.assert_called_once_with(
         "https://nominatim.openstreetmap.org/search",
         params={
