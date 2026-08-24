@@ -128,17 +128,67 @@ def _ambiguity_notice(
     )
 
 
+def _index_active(
+    by_name: dict[str, list[Site]],
+    by_address: dict[str, list[Site]],
+    site: Site,
+) -> None:
+    """Add a now-active site to the ambiguity indexes for later rows to see."""
+    by_name[site.normalized_name].append(site)
+    by_address[site.normalized_address].append(site)
+
+
+def _creation_ambiguity_notices(
+    row_number: int,
+    valid_row: _ValidRow,
+    active_by_name: dict[str, list[Site]],
+    active_by_address: dict[str, list[Site]],
+) -> list[ImportNotice]:
+    """Warn only when a newly created record partially matches an active one."""
+    notices: list[ImportNotice] = []
+    address_notice = _ambiguity_notice(
+        row_number,
+        subject="address",
+        relationship="under a different normalized name",
+        site_ids=[
+            site.id
+            for site in active_by_address[valid_row.normalized_address]
+            if site.normalized_name != valid_row.normalized_name
+        ],
+    )
+    if address_notice is not None:
+        notices.append(address_notice)
+
+    name_notice = _ambiguity_notice(
+        row_number,
+        subject="name",
+        relationship="with a different normalized address",
+        site_ids=[
+            site.id
+            for site in active_by_name[valid_row.normalized_name]
+            if site.normalized_address != valid_row.normalized_address
+        ],
+    )
+    if name_notice is not None:
+        notices.append(name_notice)
+    return notices
+
+
 def upsert_sites(rows: list[object]) -> UpsertResult:
     """Add or reactivate valid site rows without changing unmatched records."""
     existing_sites = list(Site.objects.all())
     sites_by_pair = {
         (site.normalized_name, site.normalized_address): site for site in existing_sites
     }
-    sites_by_name: dict[str, list[Site]] = defaultdict(list)
-    sites_by_address: dict[str, list[Site]] = defaultdict(list)
+    # Ambiguity is only meaningful against the live catalogue, and only worth
+    # raising when a row adds a genuinely new record; matched rows changed
+    # nothing, and deactivated records are not part of the active list.
+    active_by_name: dict[str, list[Site]] = defaultdict(list)
+    active_by_address: dict[str, list[Site]] = defaultdict(list)
     for site in existing_sites:
-        sites_by_name[site.normalized_name].append(site)
-        sites_by_address[site.normalized_address].append(site)
+        if site.is_active:
+            active_by_name[site.normalized_name].append(site)
+            active_by_address[site.normalized_address].append(site)
 
     created_count = 0
     reactivated_count = 0
@@ -179,51 +229,29 @@ def upsert_sites(rows: list[object]) -> UpsertResult:
             continue
         seen_pairs.add(normalized_pair)
 
-        same_address_ids = [
-            site.id
-            for site in sites_by_address[valid_row.normalized_address]
-            if site.normalized_name != valid_row.normalized_name
-        ]
-        address_notice = _ambiguity_notice(
-            row_number,
-            subject="address",
-            relationship="under a different normalized name",
-            site_ids=same_address_ids,
-        )
-        if address_notice is not None:
-            notices.append(address_notice)
-
-        same_name_ids = [
-            site.id
-            for site in sites_by_name[valid_row.normalized_name]
-            if site.normalized_address != valid_row.normalized_address
-        ]
-        name_notice = _ambiguity_notice(
-            row_number,
-            subject="name",
-            relationship="with a different normalized address",
-            site_ids=same_name_ids,
-        )
-        if name_notice is not None:
-            notices.append(name_notice)
-
         existing_site = sites_by_pair.get(normalized_pair)
         if existing_site is not None:
             if not existing_site.is_active:
                 existing_site.is_active = True
                 existing_site.save(update_fields=("is_active", "updated_at"))
                 reactivated_count += 1
+                _index_active(active_by_name, active_by_address, existing_site)
             else:
                 unchanged_count += 1
             continue
+
+        notices.extend(
+            _creation_ambiguity_notices(
+                row_number, valid_row, active_by_name, active_by_address
+            )
+        )
 
         created_site = Site.objects.create(
             name=valid_row.name,
             address=valid_row.address,
         )
         sites_by_pair[normalized_pair] = created_site
-        sites_by_name[valid_row.normalized_name].append(created_site)
-        sites_by_address[valid_row.normalized_address].append(created_site)
+        _index_active(active_by_name, active_by_address, created_site)
         created_count += 1
         created_site_ids.append(created_site.id)
 
@@ -271,61 +299,39 @@ def sync_sites(rows: list[object]) -> SyncResult:
             (site.normalized_name, site.normalized_address): site
             for site in existing_sites
         }
-        sites_by_name: dict[str, list[Site]] = defaultdict(list)
-        sites_by_address: dict[str, list[Site]] = defaultdict(list)
+        active_by_name: dict[str, list[Site]] = defaultdict(list)
+        active_by_address: dict[str, list[Site]] = defaultdict(list)
         for site in existing_sites:
-            sites_by_name[site.normalized_name].append(site)
-            sites_by_address[site.normalized_address].append(site)
+            if site.is_active:
+                active_by_name[site.normalized_name].append(site)
+                active_by_address[site.normalized_address].append(site)
 
         created_ids: list[int] = []
         reactivated_count = 0
         unchanged_count = 0
         for row_number, valid_row in valid_rows:
-            same_address_ids = [
-                site.id
-                for site in sites_by_address[valid_row.normalized_address]
-                if site.normalized_name != valid_row.normalized_name
-            ]
-            address_notice = _ambiguity_notice(
-                row_number,
-                subject="address",
-                relationship="under a different normalized name",
-                site_ids=same_address_ids,
-            )
-            if address_notice is not None:
-                notices.append(address_notice)
-
-            same_name_ids = [
-                site.id
-                for site in sites_by_name[valid_row.normalized_name]
-                if site.normalized_address != valid_row.normalized_address
-            ]
-            name_notice = _ambiguity_notice(
-                row_number,
-                subject="name",
-                relationship="with a different normalized address",
-                site_ids=same_name_ids,
-            )
-            if name_notice is not None:
-                notices.append(name_notice)
-
             pair = (valid_row.normalized_name, valid_row.normalized_address)
             matched_site = sites_by_pair.get(pair)
             if matched_site is None:
+                notices.extend(
+                    _creation_ambiguity_notices(
+                        row_number, valid_row, active_by_name, active_by_address
+                    )
+                )
                 matched_site = Site.objects.create(
                     name=valid_row.name,
                     address=valid_row.address,
                 )
                 created_ids.append(matched_site.id)
                 sites_by_pair[pair] = matched_site
-                sites_by_name[valid_row.normalized_name].append(matched_site)
-                sites_by_address[valid_row.normalized_address].append(matched_site)
+                _index_active(active_by_name, active_by_address, matched_site)
             elif matched_site.is_active:
                 unchanged_count += 1
             else:
                 matched_site.is_active = True
                 matched_site.save(update_fields=("is_active", "updated_at"))
                 reactivated_count += 1
+                _index_active(active_by_name, active_by_address, matched_site)
 
         omitted = [
             site

@@ -18,12 +18,10 @@ class SiteAdmin(SiteModelAdmin):
     list_display = ("name", "address", "is_active", "geocode_status", "updated_at")
     list_filter = ("is_active", "geocode_status")
     search_fields = ("name", "address")
+    # Hard delete is intentionally available here (and only here) so operators
+    # keep full control; the soft-delete actions below stay the default,
+    # reversible path that preserves stored provider state.
     actions = ("deactivate_sites", "reactivate_sites")
-
-    def has_delete_permission(
-        self, request: HttpRequest, obj: Site | None = None
-    ) -> bool:
-        return False
 
     @admin.action(description="Deactivate selected sites")
     def deactivate_sites(self, request: HttpRequest, queryset: QuerySet[Site]) -> None:

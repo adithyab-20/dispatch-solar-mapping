@@ -1,5 +1,15 @@
-/** The app bar: wordmark plus the configured API origin (UI brief §3). */
-export function AppBar({ apiOrigin }: { apiOrigin: string }) {
+/**
+ * The app bar: wordmark plus the configured API origin (UI brief §3). When
+ * `onUploadSites` is supplied (the landing page), it also offers the "Upload
+ * sites" action that opens the list-import dialog.
+ */
+export function AppBar({
+  apiOrigin,
+  onUploadSites,
+}: {
+  apiOrigin: string;
+  onUploadSites?: () => void;
+}) {
   return (
     <header
       style={{
@@ -34,9 +44,16 @@ export function AppBar({ apiOrigin }: { apiOrigin: string }) {
           Solar
         </span>
       </div>
-      <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-        API {apiOrigin}
-      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        {onUploadSites ? (
+          <button type="button" className="btn" onClick={onUploadSites}>
+            Upload sites
+          </button>
+        ) : null}
+        <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+          API {apiOrigin}
+        </span>
+      </div>
     </header>
   );
 }

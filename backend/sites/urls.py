@@ -3,7 +3,9 @@ from django.urls import path
 from sites.views import (
     GeocodeRefreshView,
     PVWattsRefreshView,
+    SiteDeactivateView,
     SiteDetailView,
+    SiteImportView,
     SiteListView,
     SolarResourceRefreshView,
 )
@@ -12,6 +14,8 @@ app_name = "sites"
 
 urlpatterns = [
     path("sites/", SiteListView.as_view(), name="site-list"),
+    path("sites/import/", SiteImportView.as_view(), name="site-import"),
+    path("sites/deactivate/", SiteDeactivateView.as_view(), name="site-deactivate"),
     path("sites/<int:pk>/", SiteDetailView.as_view(), name="site-detail"),
     path(
         "sites/<int:pk>/geocode/",

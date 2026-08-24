@@ -109,11 +109,59 @@ export const apiClient = {
   refreshPvwatts(id: number): Promise<SiteDetail> {
     return requestJson<SiteDetail>(`/sites/${id}/pvwatts/`, { method: "POST" });
   },
+  /**
+   * Upload a site list; the backend adds new sites and reactivates matches.
+   * Sync (which deactivates omitted sites) is terminal-only — never sent here.
+   */
+  importSites(sites: SiteImportRow[]): Promise<ImportResult> {
+    return requestJson<ImportResult>("/sites/import/", {
+      method: "POST",
+      body: JSON.stringify({ mode: "upsert", sites }),
+    });
+  },
+  /** Soft-deactivate the selected active sites; no providers are called. */
+  deactivateSites(ids: number[]): Promise<DeactivateResult> {
+    return requestJson<DeactivateResult>("/sites/deactivate/", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    });
+  },
 };
 
 export interface SitePatchInput {
   name?: string;
   address?: string;
+}
+
+/** One row of an uploaded site list. */
+export interface SiteImportRow {
+  name: string;
+  address: string;
+}
+
+/** A per-row rejection or ambiguity warning carried back from an import. */
+export interface ImportNotice {
+  kind: string;
+  message: string;
+}
+
+/**
+ * The outcome of an import. `rejected_count` is present for upsert; sync
+ * reports `deactivated_count` for sites omitted from the uploaded file.
+ */
+export interface ImportResult {
+  summary: string;
+  created_count: number;
+  reactivated_count: number;
+  unchanged_count: number;
+  duplicate_count: number;
+  notices: ImportNotice[];
+  rejected_count?: number;
+  deactivated_count?: number;
+}
+
+export interface DeactivateResult {
+  deactivated_count: number;
 }
 
 export interface PatchValidationPayload {

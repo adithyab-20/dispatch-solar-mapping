@@ -286,6 +286,44 @@ def test_upsert_warns_about_partial_identity_matches_without_merging(
 
 
 @pytest.mark.django_db
+def test_upsert_does_not_warn_when_a_colliding_row_is_unchanged(
+    tmp_path: Path,
+) -> None:
+    # Two active records already partially collide (shared address). Re-importing
+    # them verbatim changes nothing, so neither row should warn again.
+    Site.objects.create(name="North Array", address="1 Main St")
+    Site.objects.create(name="South Array", address="1 Main St.")
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(
+        json.dumps(
+            [
+                {"name": "North Array", "address": "1 Main St"},
+                {"name": "South Array", "address": "1 Main St."},
+            ]
+        )
+    )
+    stderr = StringIO()
+
+    call_command("import_sites", import_path, mode="upsert", stderr=stderr)
+
+    assert "already used" not in stderr.getvalue()
+
+
+@pytest.mark.django_db
+def test_upsert_created_row_ignores_deactivated_collisions(tmp_path: Path) -> None:
+    # A deactivated record must not make a newly created site look ambiguous.
+    Site.objects.create(name="Old Array", address="1 Main St", is_active=False)
+    import_path = tmp_path / "sites.json"
+    import_path.write_text(json.dumps([{"name": "New Array", "address": "1 Main St"}]))
+    stderr = StringIO()
+
+    call_command("import_sites", import_path, mode="upsert", stderr=stderr)
+
+    assert Site.objects.filter(name="New Array", is_active=True).exists()
+    assert "already used" not in stderr.getvalue()
+
+
+@pytest.mark.django_db
 def test_replaceable_initial_dataset_imports_at_least_five_named_us_sites() -> None:
     call_command(
         "import_sites",
@@ -350,7 +388,7 @@ def test_sync_reconciles_every_lifecycle_transition_before_processing(
         )
 
     monkeypatch.setattr(
-        "sites.management.commands.import_sites.process_new_sites",
+        "sites.services.workflow.process_new_sites",
         observe_processing,
     )
     import_path = tmp_path / "sites.json"
@@ -407,7 +445,7 @@ def test_sync_replacement_pair_is_new_and_survives_processing_crash(
         raise RuntimeError("unexpected provider bug")
 
     monkeypatch.setattr(
-        "sites.management.commands.import_sites.process_new_sites",
+        "sites.services.workflow.process_new_sites",
         crash_after_reconciliation,
     )
     import_path = tmp_path / "sites.json"
@@ -429,9 +467,7 @@ def test_sync_replacement_pair_is_new_and_survives_processing_crash(
 def test_sync_reports_duplicates_and_partial_identity_matches(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(
-        "sites.management.commands.import_sites.process_new_sites", Mock()
-    )
+    monkeypatch.setattr("sites.services.workflow.process_new_sites", Mock())
     import_path = tmp_path / "sites.json"
     import_path.write_text(
         json.dumps(

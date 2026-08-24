@@ -1,16 +1,19 @@
 from collections.abc import Callable
 
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from sites.models import Site
 from sites.serializers import SiteDetailSerializer, SiteListSerializer
+from sites.services.importing import SyncResult, UpsertResult
 from sites.services.normalization import normalize_text
 from sites.services.pvwatts import run_pvwatts
 from sites.services.solar_resource import fetch_solar_resource
 from sites.services.workflow import (
+    apply_import,
     invalidate_location,
     process_site,
     refresh_geocoding,
@@ -129,6 +132,76 @@ class SolarResourceRefreshView(ProcessingStageRefreshView):
 class PVWattsRefreshView(ProcessingStageRefreshView):
     provider = staticmethod(run_pvwatts)
     stage_label = "PVWatts"
+
+
+class SiteImportView(generics.GenericAPIView[Site]):
+    """Browser front door for the same import path as the management command."""
+
+    queryset = ACTIVE_SITE_QUERYSET
+    serializer_class = SiteListSerializer
+    http_method_names = ["post", "options"]
+
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        payload = request.data
+        if not isinstance(payload, dict):
+            return _bad_request("The request body must be a JSON object.")
+        # Sync is deliberately terminal-only (the import_sites --sync command),
+        # so the browser can never deactivate sites omitted from an upload.
+        mode = payload.get("mode")
+        if mode != "upsert":
+            return _bad_request('mode must be "upsert".')
+        rows = payload.get("sites")
+        if not isinstance(rows, list):
+            return _bad_request("sites must be a JSON array.")
+
+        result = apply_import(rows, mode)
+        return Response(_import_response(result))
+
+
+class SiteDeactivateView(generics.GenericAPIView[Site]):
+    """Soft-deactivate a selection of active sites; never touches providers."""
+
+    queryset = ACTIVE_SITE_QUERYSET
+    serializer_class = SiteListSerializer
+    http_method_names = ["post", "options"]
+
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        payload = request.data
+        if not isinstance(payload, dict):
+            return _bad_request("The request body must be a JSON object.")
+        ids = payload.get("ids")
+        if not isinstance(ids, list) or not all(
+            isinstance(value, int) and not isinstance(value, bool) for value in ids
+        ):
+            return _bad_request("ids must be a JSON array of integers.")
+
+        deactivated_count = Site.objects.filter(is_active=True, pk__in=ids).update(
+            is_active=False, updated_at=timezone.now()
+        )
+        return Response({"deactivated_count": deactivated_count})
+
+
+def _bad_request(detail: str) -> Response:
+    return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _import_response(result: SyncResult | UpsertResult) -> dict[str, object]:
+    data: dict[str, object] = {
+        "summary": result.summary,
+        "created_count": result.created_count,
+        "reactivated_count": result.reactivated_count,
+        "unchanged_count": result.unchanged_count,
+        "duplicate_count": result.duplicate_count,
+        "notices": [
+            {"kind": notice.kind, "message": notice.message}
+            for notice in result.notices
+        ],
+    }
+    if isinstance(result, SyncResult):
+        data["deactivated_count"] = result.deactivated_count
+    else:
+        data["rejected_count"] = result.rejected_count
+    return data
 
 
 def _validate_patch_payload(

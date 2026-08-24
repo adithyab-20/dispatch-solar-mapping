@@ -9,6 +9,7 @@ import { MapPanel } from "@/components/landing/MapPanel";
 import { useRailState } from "@/components/landing/RailState";
 import { RailSpine } from "@/components/landing/RailSpine";
 import { EmptyState, ErrorState, LoadingState } from "@/components/landing/states";
+import { UploadSitesDialog } from "@/components/landing/UploadSitesDialog";
 import { ApiError, type ApiErrorKind, apiClient, apiOrigin } from "@/lib/api/client";
 import type { SiteListItem } from "@/lib/api/types";
 import { partitionSites } from "@/lib/sites";
@@ -29,6 +30,7 @@ export function LandingView() {
   const { collapsed, setCollapsed } = useRailState();
   const [view, setView] = useState<View>({ phase: "loading" });
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   // Bumped whenever the rail opens or closes so Leaflet re-measures its canvas
   // without changing the user's zoom or center.
   const [layoutSignal, setLayoutSignal] = useState(0);
@@ -60,7 +62,7 @@ export function LandingView() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <AppBar apiOrigin={apiOrigin()} />
+      <AppBar apiOrigin={apiOrigin()} onUploadSites={() => setUploadOpen(true)} />
       {renderBody(view, load, {
         highlightedId,
         onHighlight: setHighlightedId,
@@ -68,7 +70,13 @@ export function LandingView() {
         collapsed,
         toggleRail,
         layoutSignal,
+        onReload: load,
       })}
+      <UploadSitesDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onComplete={load}
+      />
     </div>
   );
 }
@@ -80,6 +88,7 @@ interface RailState {
   collapsed: boolean;
   toggleRail: () => void;
   layoutSignal: number;
+  onReload: () => void;
 }
 
 function renderBody(view: View, retry: () => void, rail: RailState) {
@@ -122,6 +131,7 @@ function renderBody(view: View, retry: () => void, rail: RailState) {
             highlightedId={rail.highlightedId}
             onHighlight={rail.onHighlight}
             onCollapse={rail.toggleRail}
+            onReload={rail.onReload}
           />
         </div>
         {rail.collapsed ? <RailSpine onExpand={rail.toggleRail} /> : null}
