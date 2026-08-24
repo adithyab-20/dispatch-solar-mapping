@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --ground:#F7F7F8; --panel:#FFFFFF; --panel-2:#F1F1F1; --sunk:#F5F5F5;
+  --rule:#E2E2E2; --rule-strong:#C2C2C2;
+  --ink:#101010; --ink-2:#262223; --navy:#2C6B3A; /* retained name; Dispatch uses green, not blue */ --ok-deep:#004D00; --muted:#58595B; --faint:#767676;
+  --solar:#006400; --solar-deep:#004D00; --solar-lite:#4E9E62; --solar-wash:#E9F2EA;
+  --pv:#C96A1C; --pv-deep:#B9601B; --pv-deepest:#9A4F14; /* PVWatts marks — the only non-green: bars #C96A1C, headline #B9601B, section eyebrow #9A4F14 (AA-normal at 11px) */
+  --teal:#3E8E4F; --teal-wash:#EDF4EE;
+  --ok:#006400; --ok-wash:#E9F2EA; --warn:#8A6100; --warn-wash:#FBF0DC;
+  --fail:#B3261E; --fail-wash:#FBE7E5;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --display:'Poppins','IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+a{color:var(--ok);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+a:hover{color:var(--ok-deep);border-bottom-color:var(--ok)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.sec{font-family:var(--display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--rule)}
+.hr{height:1px;background:var(--rule);border:0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:2px 7px 2px 5px;border-radius:2px}
+.c-ok{color:var(--ok);background:var(--ok-wash)}
+.c-warn{color:var(--warn);background:var(--warn-wash)}
+.c-fail{color:var(--fail);background:var(--fail-wash)}
+.c-mute{color:var(--muted);background:var(--panel-2)}
+.c-run{color:var(--solar-deep);background:var(--solar-wash)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink)}
+.unit{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.02em}
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);background:var(--panel);
+  border:1px solid var(--rule-strong);border-radius:3px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn:hover{border-color:var(--ink);background:var(--panel-2)}
+.btn-p{background:var(--ink);color:#FAFAFA;border-color:var(--ink)}
+.btn-d{color:var(--fail);border-color:#E8C6C3}
+.btn[disabled],.btn.is-busy{color:var(--faint);border-color:var(--rule);background:var(--panel-2);cursor:default}
+
+/* Dispatch: display face for headings and the wordmark; generous tracking. */
+h1,h2{font-family:var(--display);letter-spacing:-.005em}
+.wordmark{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.wordmark-2{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:300;color:var(--muted)}
+  </style>
+</helmet>
+<div style="width:1040px;min-height:1560px;background:var(--ground);padding:24px">
+  <h1 style="margin:0 0 4px;font-size:20px;font-weight:600">Editing and reprocessing</h1>
+  <p style="margin:0 0 20px;font-size:12.5px;color:var(--muted);max-width:720px">One panel, opened from the detail page header. It stays on the detail route so the site's current state remains visible behind it. Every state below is a step in the same panel — never a separate page.</p>
+
+  <!-- A. default -->
+  <div style="margin-bottom:18px">
+    <div class="lbl" style="margin-bottom:6px">A · Opened, unchanged</div>
+    <div class="panel" style="border-radius:2px;padding:18px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h2 style="margin:0;font-size:15px;font-weight:600">Edit site</h2>
+        <span class="mono" style="font-size:10.5px;color:var(--faint)">Site #1 · active</span>
+      </div>
+      <div style="margin-top:14px">
+        <label class="lbl" style="display:block;margin-bottom:5px">Display name</label>
+        <input value="Desert Bloom Solar" readonly style="width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;padding:9px 11px">
+      </div>
+      <div style="margin-top:12px">
+        <label class="lbl" style="display:block;margin-bottom:5px">Address</label>
+        <input value="3737 W Buckeye Rd, Phoenix, AZ 85009" readonly style="width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--rule-strong);border-radius:2px;padding:9px 11px">
+        <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:5px">Saved exactly as typed. Nothing is looked up while you type.</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--rule)">
+        <span style="font-size:11.5px;color:var(--muted)">No changes yet — saving now would do nothing at all.</span>
+        <div style="display:flex;gap:8px"><button class="btn">Cancel</button><button class="btn btn-p" disabled style="opacity:.45">Save changes</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B. cosmetic vs meaningful -->
+  <div style="margin-bottom:18px">
+    <div class="lbl" style="margin-bottom:6px">B · Change detected — the panel says what it will cost before you commit</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="panel" style="border-radius:2px;padding:16px 18px">
+        <div style="display:flex;align-items:center;gap:8px"><span class="chip c-ok"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.4" fill="#006400"></circle></svg>keeps results</span><span style="font-size:13px;font-weight:600">Name only</span></div>
+        <div style="margin-top:12px">
+          <label class="lbl" style="display:block;margin-bottom:5px">Display name</label>
+          <div style="border:1.5px solid var(--ink);border-radius:2px;padding:9px 11px;font-size:13px;background:var(--panel)">Desert Bloom Solar <span style="color:var(--solar-deep)">I</span></div>
+        </div>
+        <p style="margin:12px 0 0;font-size:12px;color:var(--muted)">Coordinates and both solar results are kept. No provider is called.</p>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn">Cancel</button><button class="btn btn-p">Save changes</button></div>
+      </div>
+      <div class="panel" style="border-radius:2px;padding:16px 18px;border-left:3px solid var(--warn)">
+        <div style="display:flex;align-items:center;gap:8px"><span class="chip c-warn"><svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.4l4.6 8.4H1.4z" fill="none" stroke="#8A6100" stroke-width="1.3" stroke-linejoin="round"></path></svg>clears results</span><span style="font-size:13px;font-weight:600">Address changed</span></div>
+        <div style="margin-top:12px">
+          <label class="lbl" style="display:block;margin-bottom:5px">Address</label>
+          <div style="border:1.5px solid var(--warn);border-radius:2px;padding:9px 11px;font-size:13px;background:var(--panel)">3737 W Buckeye Rd, Phoenix, AZ 85043 <span style="color:var(--solar-deep)">I</span></div>
+        </div>
+        <div style="background:var(--warn-wash);border-radius:2px;padding:10px 12px;margin-top:12px">
+          <div style="font-size:12px;color:#6E4E00;font-weight:600">Saving will discard the current results</div>
+          <ul style="margin:6px 0 0;padding-left:16px;font-size:11.5px;color:#6E4E00;line-height:1.6">
+            <li>Coordinates and resolved address are cleared first</li>
+            <li>Both solar results and their timestamps are cleared</li>
+            <li>The address is looked up again, then both solar stages run</li>
+          </ul>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn">Cancel</button><button class="btn btn-p">Save and reprocess</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C. in progress -->
+  <div style="margin-bottom:18px">
+    <div class="lbl" style="margin-bottom:6px">C · Saving — the panel stays open, controls lock, progress is named stage by stage</div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.4" stroke="#E2E2E2" stroke-width="1.8" fill="none"></circle><path d="M7 1.6A5.4 5.4 0 0 1 12.4 7" stroke="#006400" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg>
+        <span style="font-size:13px;font-weight:600">Reprocessing — this can take a few seconds</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <div style="flex:1;background:var(--panel-2);border-radius:2px;padding:9px 11px"><div class="lbl">1 · Looking up address</div><div style="font-size:12px;margin-top:3px;color:var(--solar-deep);font-weight:500">in progress</div></div>
+        <div style="flex:1;background:var(--sunk);border-radius:2px;padding:9px 11px"><div class="lbl">2 · Solar resource</div><div style="font-size:12px;margin-top:3px;color:var(--faint)">waiting</div></div>
+        <div style="flex:1;background:var(--sunk);border-radius:2px;padding:9px 11px"><div class="lbl">3 · PVWatts</div><div style="font-size:12px;margin-top:3px;color:var(--faint)">waiting</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)">
+        <span class="mono" style="font-size:10.5px;color:var(--faint)">Repeat submissions are ignored while this runs.</span>
+        <button class="btn is-busy">Saving…</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- D. validation -->
+  <div style="margin-bottom:18px">
+    <div class="lbl" style="margin-bottom:6px">D · Rejected before anything changed — every problem listed at once, in a stable order</div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px;border-left:3px solid var(--fail)">
+      <div style="display:flex;align-items:center;gap:8px"><span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>not saved</span><span style="font-size:13px;font-weight:600">Two things need fixing</span></div>
+      <div style="margin-top:12px">
+        <label class="lbl" style="display:block;margin-bottom:5px">Address</label>
+        <div style="border:1.5px solid var(--fail);border-radius:2px;padding:9px 11px;font-size:13px;background:var(--panel);color:var(--muted)">— — —</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--fail)">
+          <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true"><circle cx="5.5" cy="5.5" r="4.6" stroke="#B3261E" stroke-width="1.2" fill="none"></circle><path d="M5.5 3v3.2" stroke="#B3261E" stroke-width="1.3" stroke-linecap="round"></path><circle cx="5.5" cy="8" r=".8" fill="#B3261E"></circle></svg>
+          Address must contain at least one letter or number.
+        </div>
+      </div>
+      <div style="background:var(--fail-wash);border-radius:2px;padding:10px 12px;margin-top:12px">
+        <div style="font-size:11.5px;color:#8C2019">Unsupported field <span class="mono">latitude</span> was ignored and not saved. Only name and address can be edited here.</div>
+      </div>
+      <p style="margin:12px 0 0;font-size:11.5px;color:var(--muted)">Nothing was written and no lookup ran.</p>
+    </div>
+  </div>
+
+  <!-- E. conflict -->
+  <div style="margin-bottom:18px">
+    <div class="lbl" style="margin-bottom:6px">E · Conflict — another record already uses this exact name and address</div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px;border-left:3px solid var(--fail)">
+      <div style="display:flex;align-items:center;gap:8px"><span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>not saved</span><span style="font-size:13px;font-weight:600">That name and address pair already exists</span></div>
+      <p style="margin:10px 0 0;font-size:12.5px;color:var(--muted);max-width:700px">Punctuation and capitalisation are ignored when comparing, so this counts as the same pair. The two records are never merged automatically — open the other one, or change what you entered.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel-2);border:1px solid var(--rule-strong);border-radius:2px;padding:11px 13px;margin-top:12px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Desert Bloom Solar</div>
+          <div class="mono" style="font-size:11px;color:var(--muted);margin-top:2px">Site #1 · 3737 W. Buckeye Rd., Phoenix, AZ 85009</div>
+        </div>
+        <a href="#" style="font-size:12px">Open site #1 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- F. destructive refresh confirm -->
+  <div>
+    <div class="lbl" style="margin-bottom:6px">F · Geocode refresh confirmation</div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px;border-left:3px solid var(--fail);max-width:620px">
+      <div style="font-size:13px;font-weight:600">Refresh geocoding for Desert Bloom Solar?</div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">The current coordinates and both solar results are cleared before the lookup starts. If the lookup then fails, this site is left with no results — the old ones are not restored, and there is no earlier version to fall back to.</p>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn">Keep as is</button><button class="btn btn-d" style="background:var(--fail);color:#FDF7F6;border-color:var(--fail)">Clear and refresh</button></div>
+    </div>
+    <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:8px;max-width:620px;line-height:1.5">After saving, the panel closes and the detail page below shows the new state.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

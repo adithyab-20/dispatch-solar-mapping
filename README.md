@@ -51,6 +51,29 @@ site omitted from the file. Later duplicate pairs are skipped. Invalid rows and
 same-name/different-address or same-address/different-name ambiguities are
 reported without preventing other valid rows from being accepted.
 
+Use sync mode when the file is the complete authoritative active-site set:
+
+```sh
+uv run python manage.py import_sites PATH_TO_SITES.json --mode sync
+```
+
+Sync validates and normalizes the entire document before changing the
+database. Any invalid row aborts with no lifecycle changes. A valid document
+atomically creates new pairs, reactivates inactive exact matches, preserves
+active exact matches, and deactivates records omitted from the file. Records
+are never deleted, and replacing a normalized pair creates a new record while
+deactivating the old one. Duplicate pairs after the first are skipped.
+
+The lifecycle reconciliation commits before newly created sites are processed
+sequentially. Existing and reactivated sites retain their display strings and
+all provider state without new provider calls. An unexpected provider failure
+therefore leaves the reconciled active set committed and the affected new site
+available for a later retry.
+
+For occasional manual lifecycle changes, sign in at `/admin/`, select Site
+records, and use **Deactivate selected sites** or **Reactivate selected sites**.
+These Admin actions change lifecycle only and never call providers.
+
 After the complete upsert is committed, new records are geocoded sequentially
 through Nominatim. Each resolved site then independently retrieves Solar
 Resource V1 data and runs a standardized PVWatts V8 estimate through NLR using

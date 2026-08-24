@@ -1,0 +1,129 @@
+<div style="width:1180px;min-height:1420px;background:var(--ground);padding:24px">
+  <h1 style="margin:0 0 4px;font-size:20px;font-weight:600">System states</h1>
+  <p style="margin:0 0 20px;font-size:12.5px;color:var(--muted);max-width:760px">Each state says what happened, what the app already knows, and what the reader can do next. No spinner stands alone, no empty page is silent, and no failure is dressed up as data.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <!-- loading -->
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Loading the catalog</div>
+      <div class="panel" style="border-radius:2px;height:300px;display:flex;overflow:hidden">
+        <div style="width:230px;border-right:1px solid var(--rule);padding:14px">
+          <div style="height:9px;width:96px;background:var(--rule);border-radius:2px"></div>
+          <div style="height:5px;width:100%;background:var(--sunk);border-radius:2px;margin-top:12px"></div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+            <div><div style="height:8px;width:120px;background:var(--rule);border-radius:2px"></div><div style="height:6px;width:160px;background:var(--sunk);border-radius:2px;margin-top:6px"></div></div>
+            <div><div style="height:8px;width:104px;background:var(--rule);border-radius:2px"></div><div style="height:6px;width:150px;background:var(--sunk);border-radius:2px;margin-top:6px"></div></div>
+            <div><div style="height:8px;width:132px;background:var(--rule);border-radius:2px"></div><div style="height:6px;width:120px;background:var(--sunk);border-radius:2px;margin-top:6px"></div></div>
+            <div style="opacity:.5"><div style="height:8px;width:110px;background:var(--rule);border-radius:2px"></div><div style="height:6px;width:140px;background:var(--sunk);border-radius:2px;margin-top:6px"></div></div>
+          </div>
+        </div>
+        <div style="flex:1;background:var(--sunk);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <svg width="18" height="18" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.4" stroke="#E2E2E2" stroke-width="1.8" fill="none"></circle><path d="M7 1.6A5.4 5.4 0 0 1 12.4 7" stroke="#006400" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg>
+            <div class="mono" style="font-size:10.5px;color:var(--muted);margin-top:8px">Loading sites…</div>
+          </div>
+        </div>
+      </div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">Skeleton keeps the layout still; the map area names what it is waiting for. No animation under reduced-motion — the text alone remains.</div>
+    </div>
+
+    <!-- empty -->
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Empty catalog — nothing imported yet</div>
+      <div class="panel" style="border-radius:2px;height:300px;display:flex;align-items:center;justify-content:center;padding:28px">
+        <div style="max-width:400px;text-align:center">
+          <svg width="34" height="34" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M4 24l7-16 7 9 4-5 6 12z" stroke="#C2C2C2" stroke-width="1.5" stroke-linejoin="round"></path>
+            <circle cx="22" cy="8" r="3" stroke="#006400" stroke-width="1.5"></circle>
+          </svg>
+          <div style="font-size:14px;font-weight:600;margin-top:12px">No sites yet</div>
+          <p style="margin:7px 0 0;font-size:12.5px;color:var(--muted)">Sites arrive through the import command, not through this page. Run the documented import with your JSON file, then reload.</p>
+          <div class="mono" style="display:inline-block;margin-top:12px;font-size:11px;background:var(--panel-2);border:1px solid var(--rule);border-radius:2px;padding:7px 11px;color:var(--ink-2)">make import FILE=sites.json</div>
+        </div>
+      </div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">Points at the real mechanism instead of offering an "Add site" button the API does not provide.</div>
+    </div>
+
+    <!-- api failure -->
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Catalog request failed</div>
+      <div class="panel" style="border-radius:2px;height:300px;display:flex;align-items:center;justify-content:center;padding:28px;border-left:3px solid var(--fail)">
+        <div style="max-width:420px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" stroke="#B3261E" stroke-width="1.4" fill="none"></circle><path d="M8 4.4v4.2" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path><circle cx="8" cy="11.2" r=".9" fill="#B3261E"></circle></svg>
+            <span style="font-size:14px;font-weight:600">Could not reach the application API</span>
+          </div>
+          <p style="margin:8px 0 0;font-size:12.5px;color:var(--muted)">The site list could not be loaded. This is a connection problem between this page and the local backend — no site data has been changed.</p>
+          <div class="mono" style="font-size:11px;color:var(--faint);margin-top:10px">GET /api/sites/ · network error</div>
+          <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-p">Try again</button><button class="btn">How to start the backend</button></div>
+        </div>
+      </div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">Names the failing request without leaking keys, query parameters or raw exception text.</div>
+    </div>
+
+    <!-- not found -->
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Site not found — unknown or deactivated</div>
+      <div class="panel" style="border-radius:2px;height:300px;display:flex;align-items:center;justify-content:center;padding:28px">
+        <div style="max-width:420px">
+          <div class="mono" style="font-size:10.5px;color:var(--faint)">/sites/42</div>
+          <div style="font-size:14px;font-weight:600;margin-top:6px">This site is not available</div>
+          <p style="margin:8px 0 0;font-size:12.5px;color:var(--muted)">It was either never imported, or it has been deactivated. Deactivated sites keep their history in the database but are not shown in the application.</p>
+          <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-p">Back to all sites</button></div>
+        </div>
+      </div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">One response for both cases — the page never reveals that an inactive record exists.</div>
+    </div>
+  </div>
+
+  <!-- inline feedback strip -->
+  <div style="margin-top:22px">
+    <div class="lbl" style="margin-bottom:6px">Inline feedback used across the detail page</div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+      <div style="display:flex;gap:9px;background:var(--ok-wash);border-radius:2px;padding:11px 13px">
+        <svg width="14" height="14" viewBox="0 0 16 16" style="margin-top:1px" aria-hidden="true"><circle cx="8" cy="8" r="6.6" stroke="#006400" stroke-width="1.4" fill="none"></circle><path d="M5 8.2l2.1 2.1L11 6.4" stroke="#006400" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>
+        <div><div style="font-size:12.5px;font-weight:600;color:#004D00">Solar resource retried — succeeded</div><div style="font-size:11.5px;color:#004D00;margin-top:2px">Values below are from 19:22. PVWatts was not touched.</div></div>
+      </div>
+      <div style="display:flex;gap:9px;background:var(--fail-wash);border-radius:2px;padding:11px 13px">
+        <svg width="14" height="14" viewBox="0 0 16 16" style="margin-top:1px" aria-hidden="true"><circle cx="8" cy="8" r="6.6" stroke="#B3261E" stroke-width="1.4" fill="none"></circle><path d="M8 4.4v4.2" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path><circle cx="8" cy="11.2" r=".9" fill="#B3261E"></circle></svg>
+        <div><div style="font-size:12.5px;font-weight:600;color:#8C2019">Retry ran, and the stage failed again</div><div style="font-size:11.5px;color:#8C2019;margin-top:2px">The request was accepted; the provider did not return usable values. Nothing stale was restored.</div></div>
+      </div>
+      <div style="display:flex;gap:9px;background:var(--warn-wash);border-radius:2px;padding:11px 13px">
+        <svg width="14" height="14" viewBox="0 0 16 16" style="margin-top:1px" aria-hidden="true"><path d="M8 1.6l6.2 11.2H1.8z" fill="none" stroke="#8A6100" stroke-width="1.4" stroke-linejoin="round"></path><path d="M8 6v3.4" stroke="#8A6100" stroke-width="1.5" stroke-linecap="round"></path><circle cx="8" cy="11.6" r=".85" fill="#8A6100"></circle></svg>
+        <div><div style="font-size:12.5px;font-weight:600;color:#6E4E00">Retry unavailable while this site has no coordinates</div><div style="font-size:11.5px;color:#6E4E00;margin-top:2px">Resolve the address first — the solar stages have nowhere to look.</div></div>
+      </div>
+      <div style="display:flex;gap:9px;background:var(--panel-2);border-radius:2px;padding:11px 13px">
+        <svg width="14" height="14" viewBox="0 0 16 16" style="margin-top:1px" aria-hidden="true"><circle cx="8" cy="8" r="6.6" stroke="#58595B" stroke-width="1.4" fill="none"></circle><path d="M8 7.2v4" stroke="#58595B" stroke-width="1.5" stroke-linecap="round"></path><circle cx="8" cy="4.9" r=".9" fill="#58595B"></circle></svg>
+        <div><div style="font-size:12.5px;font-weight:600">Previous values were cleared before this attempt</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">Shown wherever a refresh has emptied a section, so a blank panel is never mistaken for a zero.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the folded group, opened -->
+  <div style="margin-top:22px">
+    <div class="lbl" style="margin-bottom:6px">"Not on the map", opened — every active site is still reachable, just out of the way</div>
+    <div class="panel" style="border-radius:2px;overflow:hidden;max-width:520px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--panel-2);border-bottom:1px solid var(--rule-strong)">
+        <span style="display:flex;align-items:center;gap:9px">
+          <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 4.5L7 9l4.5-4.5" stroke="#58595B" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span style="font-size:13px;font-weight:600">Not on the map</span><span class="num" style="font-size:12px;color:var(--muted)">3</span>
+        </span>
+        <span style="font-size:11.5px;color:var(--muted)">Hide</span>
+      </div>
+      <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit">
+        <div><div style="font-size:14px;font-weight:600">Piedmont Solar Center</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">3300 Rock Quarry Rd, Raleigh, NC 27610</div></div>
+        <span class="chip c-run"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3.4" stroke="#006400" stroke-width="1.4" fill="none"></circle><path d="M4.5 1.1a3.4 3.4 0 0 1 3.4 3.4" stroke="#006400" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg>processing</span>
+      </a>
+      <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit">
+        <div><div style="font-size:14px;font-weight:600">Mesa Ridge Solar</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">14 Unnamed Rd, Mesa County, CO</div></div>
+        <span class="chip c-mute"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3.4" stroke="#58595B" stroke-width="1.4" stroke-dasharray="2 1.6" fill="none"></circle></svg>no match found</span>
+      </a>
+      <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;text-decoration:none;color:inherit">
+        <div><div style="font-size:14px;font-weight:600">Pine Flat Solar Yard</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">900 Old Mill Rd, Pine Flat, CA</div></div>
+        <span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>geocoding failed</span>
+      </a>
+    </div>
+    <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px;max-width:520px;line-height:1.5">A site being imported greys out and reads "processing" until an outcome is stored; it then joins the results list or this group. The group opens itself when every site is in it.</div>
+  </div>
+</div>

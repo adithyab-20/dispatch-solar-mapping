@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Poppins:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --ground:#F7F7F8; --panel:#FFFFFF; --panel-2:#F1F1F1; --sunk:#F5F5F5;
+  --rule:#E2E2E2; --rule-strong:#C2C2C2;
+  --ink:#101010; --ink-2:#262223; --navy:#2C6B3A; /* retained name; Dispatch uses green, not blue */ --ok-deep:#004D00; --muted:#58595B; --faint:#767676;
+  --solar:#006400; --solar-deep:#004D00; --solar-lite:#4E9E62; --solar-wash:#E9F2EA;
+  --pv:#C96A1C; --pv-deep:#B9601B; --pv-deepest:#9A4F14; /* PVWatts marks — the only non-green: bars #C96A1C, headline #B9601B, section eyebrow #9A4F14 (AA-normal at 11px) */
+  --teal:#3E8E4F; --teal-wash:#EDF4EE;
+  --ok:#006400; --ok-wash:#E9F2EA; --warn:#8A6100; --warn-wash:#FBF0DC;
+  --fail:#B3261E; --fail-wash:#FBE7E5;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --display:'Poppins','IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+a{color:var(--ok);text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+a:hover{color:var(--ok-deep);border-bottom-color:var(--ok)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:500}
+.sec{font-family:var(--display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--rule)}
+.hr{height:1px;background:var(--rule);border:0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:2px 7px 2px 5px;border-radius:2px}
+.c-ok{color:var(--ok);background:var(--ok-wash)}
+.c-warn{color:var(--warn);background:var(--warn-wash)}
+.c-fail{color:var(--fail);background:var(--fail-wash)}
+.c-mute{color:var(--muted);background:var(--panel-2)}
+.c-run{color:var(--solar-deep);background:var(--solar-wash)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--ink)}
+.unit{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.02em}
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);background:var(--panel);
+  border:1px solid var(--rule-strong);border-radius:3px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn:hover{border-color:var(--ink);background:var(--panel-2)}
+.btn-p{background:var(--ink);color:#FAFAFA;border-color:var(--ink)}
+.btn-d{color:var(--fail);border-color:#E8C6C3}
+.btn[disabled],.btn.is-busy{color:var(--faint);border-color:var(--rule);background:var(--panel-2);cursor:default}
+
+/* Dispatch: display face for headings and the wordmark; generous tracking. */
+h1,h2{font-family:var(--display);letter-spacing:-.005em}
+.wordmark{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.wordmark-2{font-family:var(--display);letter-spacing:.22em;text-transform:uppercase;font-weight:300;color:var(--muted)}
+  </style>
+</helmet>
+<div style="width:1440px;min-height:1900px;display:flex;flex-direction:column;background:var(--ground)">
+  <header style="display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--rule-strong);flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" stroke="#006400" stroke-width="1.6"></circle>
+        <g stroke="#006400" stroke-width="1.6" stroke-linecap="round"><path d="M12 2.4v3"></path><path d="M12 18.6v3"></path><path d="M2.4 12h3"></path><path d="M18.6 12h3"></path><path d="M5.2 5.2l2.1 2.1"></path><path d="M16.7 16.7l2.1 2.1"></path><path d="M18.8 5.2l-2.1 2.1"></path><path d="M7.3 16.7l-2.1 2.1"></path></g>
+      </svg>
+      <span class="wordmark" style="font-size:12.5px">Dispatch</span>
+      <span class="wordmark-2" style="font-size:12.5px">Solar Mapping</span>
+    </div>
+    <span class="mono" style="font-size:11px;color:var(--muted)">API 127.0.0.1:8000</span>
+  </header>
+  
+  <div style="padding:18px 24px 16px;background:var(--panel);border-bottom:1px solid var(--rule)">
+    <a href="#" style="font-size:12px;border:0;color:var(--muted)">← All sites</a>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-top:8px">
+      <div>
+        <h1 style="margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em">Hill Country Solar Farm</h1>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+          <span class="mono" style="font-size:11px;color:var(--muted)">Site #4 · active</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+  <button class="btn">Edit name or address</button>
+  <button class="btn btn-d">Refresh geocoding…</button></div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px;padding:16px 24px 8px">
+    <div style="display:flex;align-items:flex-start;gap:10px;background:var(--warn-wash);border:1px solid #EAD9B4;border-left:3px solid var(--warn);border-radius:2px;padding:11px 14px">
+      <svg width="15" height="15" viewBox="0 0 16 16" style="margin-top:1px" aria-hidden="true"><path d="M8 1.6l6.2 11.2H1.8z" fill="none" stroke="#8A6100" stroke-width="1.4" stroke-linejoin="round"></path><path d="M8 6v3.4" stroke="#8A6100" stroke-width="1.5" stroke-linecap="round"></path><circle cx="8" cy="11.6" r=".85" fill="#8A6100"></circle></svg>
+      <div>
+        <div style="font-size:12.5px;font-weight:600;color:#6E4E00">Partial result — one of three stages failed</div>
+        <div style="font-size:12px;color:#6E4E00;margin-top:2px">The PVWatts estimate below is complete and valid. Solar Resource failed independently and can be retried on its own; nothing else is affected.</div>
+      </div>
+    </div>
+    
+  <div class="panel" style="border-radius:2px;display:grid;grid-template-columns:1fr 1.4fr 1fr">
+    <div style="padding:14px 16px">
+      <div class="lbl">Input address (as imported)</div>
+      <div style="font-size:13px;margin-top:5px">3737 W Buckeye Rd, Phoenix, AZ 85009</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">stored verbatim · used as the geocoding query</div>
+    </div>
+    <div style="padding:14px 16px;border-left:1px solid var(--rule)">
+      <div class="lbl">Resolved address</div>
+      <div style="font-size:13px;margin-top:5px;color:var(--ink)">4500 East Ben White Boulevard, Austin, Travis County, Texas, 78741, United States</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint);margin-top:6px">Geocoding © OpenStreetMap / Nominatim · first result, US only</div>
+    </div>
+    <div style="padding:14px 16px;border-left:1px solid var(--rule)">
+      <div class="lbl">Coordinates</div>
+      <div class="num" style="font-size:14px;margin-top:5px;color:var(--ink)">30.22190, −97.71800</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="chip c-ok"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.4" fill="#006400"></circle></svg>resolved</span><span class="mono" style="font-size:10px;color:var(--faint)">attempted 19:07</span></div>
+    </div>
+  </div>
+    <div>
+      
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel-2);border:1px solid var(--rule-strong);border-bottom:0;border-radius:2px 3px 0 0;padding:11px 15px">
+    <span style="display:flex;align-items:center;gap:11px">
+      <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 4.5L7 9l4.5-4.5" stroke="#58595B" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <span class="sec" style="color:var(--ink)">Processing stages</span>
+      <span style="font-size:11.5px;color:var(--muted)">opened automatically — one stage failed</span>
+    </span>
+    <span style="font-size:11.5px;color:var(--muted)">Hide</span>
+  </div>
+      <div style="display:flex;gap:12px;align-items:stretch;border:1px solid var(--rule-strong);border-top:0;border-radius:0 0 2px 2px;padding:12px;background:var(--sunk)">
+        
+  <div class="panel" style="flex:1;padding:13px 15px;border-radius:2px;display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600">Geocoding</span>
+      <span class="chip c-ok"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.4" fill="#006400"></circle></svg>resolved</span>
+    </div>
+    <div class="mono" style="font-size:10.5px;color:var(--faint)">Last attempted 23 Aug 2026, 19:07</div>
+    <div style="font-size:11.5px;color:var(--muted)">Coordinates are present, so both downstream stages are retryable.</div>
+    <div style="margin-top:auto"><button class="btn btn-d" style="font-size:11.5px;padding:5px 10px">Refresh geocoding…</button></div>
+  </div>
+        
+  <div class="panel" style="flex:1;padding:13px 15px;border-radius:2px;display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600">Solar resource</span>
+      <span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>failed</span>
+    </div>
+    <div class="mono" style="font-size:10.5px;color:var(--faint)">Last attempted 23 Aug 2026, 19:07</div>
+    
+  <div style="background:var(--fail-wash);border-left:2px solid var(--fail);padding:8px 10px;border-radius:2px">
+    <div class="lbl" style="color:var(--fail)">Stage error</div>
+    <div style="font-size:11.5px;color:#8C2019;margin-top:3px">The solar resource service did not respond in time. No values were stored.</div>
+  </div>
+    <div style="margin-top:auto"><button class="btn" style="font-size:11.5px;padding:5px 10px"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6a4 4 0 1 1-1.3-3" fill="none" stroke="#101010" stroke-width="1.4" stroke-linecap="round"></path><path d="M10.4 1.6v3h-3" fill="none" stroke="#101010" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Retry solar resource</button></div>
+  </div>
+        
+  <div class="panel" style="flex:1;padding:13px 15px;border-radius:2px;display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:600">PVWatts</span>
+      <span class="chip c-ok"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.4" fill="#006400"></circle></svg>succeeded</span>
+    </div>
+    <div class="mono" style="font-size:10.5px;color:var(--faint)">Last attempted 23 Aug 2026, 19:07</div>
+    <div style="font-size:11.5px;color:var(--muted)">Unaffected — PVWatts consumes coordinates directly, not the solar resource result.</div>
+    <div style="margin-top:auto"><button class="btn is-busy" style="font-size:11.5px;padding:5px 10px"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.4" stroke="#767676" stroke-width="1.4" fill="none"></circle><path d="M6 1.6A4.4 4.4 0 0 1 10.4 6" stroke="#767676" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg>Retrying…</button></div>
+  </div>
+      </div>
+    </div>
+    
+  <div class="panel" style="border-radius:2px;padding:16px 18px">
+    
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px">
+    <h2 class="sec" style="margin:0;color:var(--pv-deepest)">PVWatts v8 estimate</h2>
+    <span class="mono" style="font-size:10.5px;color:var(--faint)">standardised 100 kW scenario · as of 23 Aug 2026, 19:04</span>
+  </div>
+    <div style="display:flex;margin:2px 0 18px;padding:2px 0">
+      <div style="flex:1;padding-right:18px">
+        <div class="lbl">Annual AC production</div>
+        <div style="margin-top:5px"><span class="num" style="font-size:34px;letter-spacing:-.02em;color:var(--pv-deep)">179,270</span> <span class="unit" style="font-size:12px">kWh / year</span></div>
+      </div>
+      
+  <div style="flex:1;padding:0 18px;border-left:1px solid var(--rule)">
+    <div class="lbl">Capacity factor</div>
+    <div style="margin-top:5px"><span class="num" style="font-size:26px;letter-spacing:-.01em;color:var(--ink)">20.5</span> <span class="unit" style="font-size:11px">%</span></div>
+  </div>
+      
+  <div style="flex:1;padding:0 18px;border-left:1px solid var(--rule)">
+    <div class="lbl">Annual solar radiation</div>
+    <div style="margin-top:5px"><span class="num" style="font-size:26px;letter-spacing:-.01em;color:var(--ink)">6.05</span> <span class="unit" style="font-size:11px">kWh / m² / day</span></div>
+  </div>
+      
+  <div style="flex:1;padding:0 18px;border-left:1px solid var(--rule)">
+    <div class="lbl">Best month</div>
+    <div style="margin-top:5px"><span class="num" style="font-size:26px;letter-spacing:-.01em;color:var(--ink)">May</span> <span class="unit" style="font-size:11px">18,260 kWh</span></div>
+  </div>
+    </div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px">
+      <div style="font-size:12.5px;font-weight:600">Monthly AC production <span class="unit" style="font-size:11px">kWh</span></div>
+      <span class="mono" style="font-size:10px;color:var(--faint)">hover a column for the exact value · Nov–Feb shortfall is seasonal, not a fault</span>
+    </div>
+    <svg viewBox="0 0 1240 208" width="100%" height="208" role="img" style="display:block"><line x1="54" x2="1228" y1="182.0" y2="182.0" stroke="#C2C2C2" stroke-width="1"></line><text x="46" y="185.5" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">0</text><line x1="54" x2="1228" y1="127.3" y2="127.3" stroke="#ECECEC" stroke-width="1"></line><text x="46" y="130.8" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">6,817</text><line x1="54" x2="1228" y1="72.7" y2="72.7" stroke="#ECECEC" stroke-width="1"></line><text x="46" y="76.2" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">13,634</text><line x1="54" x2="1228" y1="18.0" y2="18.0" stroke="#ECECEC" stroke-width="1"></line><text x="46" y="21.5" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">20,451</text><path d="M56 182V95.86543576905022a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="102.9" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Jan</text><path d="M153.83333333333331 182V85.68119230167423a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="200.7" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Feb</text><path d="M251.66666666666666 182V58.65686121107808a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="298.6" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Mar</text><path d="M349.5 182V46.307463620716646a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="396.4" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Apr</text><path d="M447.3333333333333 182V39.571428571428584a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#B9601B"></path><text x="494.3" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#262223">May</text><text x="494.3" y="28.6" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="500" fill="#262223">18,260</text><path d="M545.1666666666666 182V44.14230949773119a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="592.1" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Jun</text><path d="M643 182V50.15662650602411a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="689.9" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Jul</text><path d="M740.8333333333333 182V51.43968080112657a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="787.7" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Aug</text><path d="M838.6666666666666 182V59.057815678297615a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="885.6" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Sep</text><path d="M936.5 182V69.64301361289313a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="983.4" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Oct</text><path d="M1034.3333333333333 182V90.8936003755281a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="1081.3" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#767676">Nov</text><path d="M1132.1666666666665 182V103.00242528555782a4 4 0 0 1 4 -4h85.83333333333333a4 4 0 0 1 4 4V182Z" fill="#C96A1C"></path><text x="1179.1" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#262223">Dec</text><text x="1179.1" y="92.0" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="500" fill="#262223">10,350</text><g><rect x="432.3" y="-24.4" width="124" height="44" rx="3" fill="#101010"></rect><text x="442.3" y="-7.4" font-family="IBM Plex Mono, monospace" font-size="9.5" letter-spacing="0.08em" fill="#B8BCB8">MAY</text><text x="442.3" y="8.6" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="500" fill="#FAFAFA">18,260 kWh</text></g></svg>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)">
+      <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-variant-numeric:tabular-nums"><thead><tr><th style="text-align:left;padding:5px 8px 5px 0;font-weight:500;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Metric</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Jan</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Feb</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Mar</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Apr</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">May</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Jun</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Jul</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Aug</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Sep</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Oct</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Nov</th><th style="text-align:right;padding:5px 6px;font-weight:500;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#767676;border-bottom:1px solid #C2C2C2">Dec</th><th style="text-align:right;padding:5px 0 5px 10px;font-weight:600;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#262223;border-bottom:1px solid #C2C2C2">Annual</th></tr></thead><tbody><tr><td style="padding:5px 8px 5px 0;color:#262223;border-bottom:1px solid #ECECEC;white-space:nowrap">AC production <span style="color:#767676">kWh</span></td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">11,240</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">12,510</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">15,880</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">17,420</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">18,260</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">17,690</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">16,940</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">16,780</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">15,830</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">14,510</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">11,860</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">10,350</td><td style="text-align:right;padding:5px 0 5px 10px;color:#101010;font-weight:600;border-bottom:1px solid #ECECEC">179,270</td></tr><tr><td style="padding:5px 8px 5px 0;color:#262223;border-bottom:1px solid #ECECEC;white-space:nowrap">Solar radiation <span style="color:#767676">kWh/m²/day</span></td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">4.02</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">4.86</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">6.13</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">7.28</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">7.94</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">8.02</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">7.21</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">6.87</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">6.55</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">5.63</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">4.42</td><td style="text-align:right;padding:5px 6px;color:#101010;border-bottom:1px solid #ECECEC">3.72</td><td style="text-align:right;padding:5px 0 5px 10px;color:#101010;font-weight:600;border-bottom:1px solid #ECECEC">6.05</td></tr></tbody></table>
+    </div>
+  </div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px;border-left:3px solid var(--fail)">
+      
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px">
+    <h2 class="sec" style="margin:0">Solar resource</h2>
+    <span class="mono" style="font-size:10.5px;color:var(--faint)">last attempted 23 Aug 2026, 19:07</span>
+  </div>
+      <div style="display:flex;gap:14px;align-items:flex-start;max-width:760px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px"><span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>failed</span><span style="font-size:13px;font-weight:600">No values are stored for this stage</span></div>
+          <p style="margin:8px 0 0;font-size:12.5px;color:var(--muted)">The solar resource service did not respond in time. Earlier values, if any, were cleared before the attempt — nothing stale is shown here, and no placeholder zeros are substituted.</p>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn">Retry solar resource</button>
+            <button class="btn" style="border-color:var(--rule)">View raw response fields</button>
+          </div>
+        </div>
+        <div style="width:300px;border-left:1px solid var(--rule);padding-left:14px">
+          <div class="lbl">What is unaffected</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:5px">Geocoding, coordinates and the full PVWatts estimate remain exactly as they were. Retrying this stage touches nothing else.</div>
+        </div>
+      </div>
+    </div>
+    
+  <div class="panel" style="border-radius:2px;padding:14px 16px">
+    
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px">
+    <h2 class="sec" style="margin:0">Reproducibility — persisted PVWatts assumptions</h2>
+    <span class="mono" style="font-size:10.5px;color:var(--faint)">stored with the result · non-secret only</span>
+  </div>
+    <div style="display:grid;grid-template-columns:repeat(4, minmax(0,1fr));gap:1px;background:var(--rule)">
+      <div style="background:var(--panel);padding:8px 10px"><div class="lbl">Endpoint</div><div class="mono" style="font-size:11.5px;margin-top:2px">developer.nrel.gov/api/pvwatts</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Version</div><div class="mono" style="font-size:11.5px;margin-top:2px">v8</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">System capacity</div><div class="mono" style="font-size:11.5px;margin-top:2px">100 kW</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Module type</div><div class="mono" style="font-size:11.5px;margin-top:2px">Standard</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Array type</div><div class="mono" style="font-size:11.5px;margin-top:2px">Fixed, open rack</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Azimuth</div><div class="mono" style="font-size:11.5px;margin-top:2px">180°</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Tilt</div><div class="mono" style="font-size:11.5px;margin-top:2px">33.4° (site latitude, 1 dp)</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">System losses</div><div class="mono" style="font-size:11.5px;margin-top:2px">14%</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Dataset</div><div class="mono" style="font-size:11.5px;margin-top:2px">NSRDB, monthly</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">DC/AC ratio</div><div class="mono" style="font-size:11.5px;margin-top:2px">1.2</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Ground coverage ratio</div><div class="mono" style="font-size:11.5px;margin-top:2px">0.4</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Inverter efficiency</div><div class="mono" style="font-size:11.5px;margin-top:2px">96%</div></div><div style="background:var(--panel);padding:8px 10px"><div class="lbl">Search radius</div><div class="mono" style="font-size:11.5px;margin-top:2px">100 miles</div></div>
+      <div style="background:var(--panel-2);padding:8px 10px"><div class="lbl">Note</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Solar Resource is not an input to PVWatts.</div></div>
+      <div style="background:var(--panel-2);padding:8px 10px"><div class="lbl">Note</div><div style="font-size:11px;color:var(--muted);margin-top:2px">API key, URLs and query parameters are never stored or shown.</div></div>
+      <div style="background:var(--panel-2);padding:8px 10px"><div class="lbl">Note</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Values are model estimates, not metered production.</div></div>
+    </div>
+  </div>
+  </div>
+  <footer style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-top:1px solid var(--rule);margin-top:2px">
+    <span class="mono" style="font-size:10.5px;color:var(--muted)">Geocoding © OpenStreetMap contributors / <a href="#">Nominatim</a> · Map tiles © OpenStreetMap contributors</span>
+    <span class="mono" style="font-size:10.5px;color:var(--faint)">Solar data: NREL Solar Resource v1 &amp; PVWatts v8 · viewing this page makes no provider requests</span>
+  </footer></div></x-dc>
+</body>
+</html>

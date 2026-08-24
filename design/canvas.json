@@ -1,0 +1,102 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Landing \u2014 map + catalog"
+    },
+    {
+      "file": "LandingCollapsed.dc.html",
+      "x": 0,
+      "y": 1020,
+      "w": 1440,
+      "h": 900,
+      "title": "Landing \u2014 rail collapsed"
+    },
+    {
+      "file": "Detail.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 2050,
+      "title": "Detail \u2014 all three stages succeeded"
+    },
+    {
+      "file": "DetailPartial.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 2100,
+      "title": "Detail \u2014 partial: solar resource failed"
+    },
+    {
+      "file": "DetailUnresolved.dc.html",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1300,
+      "title": "Detail \u2014 unresolved, downstream blocked"
+    },
+    {
+      "file": "States.dc.html",
+      "x": 0,
+      "y": 2140,
+      "w": 1180,
+      "h": 1900,
+      "title": "System states"
+    },
+    {
+      "file": "Edit.dc.html",
+      "x": 1560,
+      "y": 2220,
+      "w": 1040,
+      "h": 1500,
+      "title": "Editing, conflicts and retries"
+    },
+    {
+      "file": "System.dc.html",
+      "x": 2700,
+      "y": 2220,
+      "w": 1180,
+      "h": 1940,
+      "title": "Foundations"
+    },
+    {
+      "file": "Mobile.dc.html",
+      "x": 4680,
+      "y": 1420,
+      "w": 1320,
+      "h": 1070,
+      "title": "Small screens"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -230,
+      "w": 520,
+      "text": "UI brief for issue #7 \u2014 Dispatch Solar Mapping\n\nDirection: Dispatch Energy's own palette \u2014 white and near-white, near-black text, their greys for rules, and one accent: Dispatch green #006400 for eyebrow labels, links, the success state and every data mark. Poppins headings with wide-tracked green labels; flat 2px cards, hairline rules, no shadows.\n\nHierarchy rule: a site's own information leads \u2014 name, location, PVWatts estimate, solar resource. Machinery (processing stages, sites without results) folds away until it is the thing you need."
+    },
+    {
+      "id": "honesty",
+      "x": 3120,
+      "y": -230,
+      "w": 520,
+      "text": "A stage that produced nothing shows nothing \u2014 never a zero, never a stale value. The stage panel is collapsed while all three succeed, and opens itself the moment one fails or is blocked: that is when it stops being machinery and becomes the answer."
+    },
+    {
+      "id": "decided",
+      "x": 4680,
+      "y": -230,
+      "w": 520,
+      "text": "Decided (was: open questions)\n\n1. Fixed import order \u2014 no sorting or filtering.\n2. A site being imported greys out and reads \"processing\"; on an outcome it joins the results list or the folded \"not on the map\" group.\n3. Phone keeps the chart AND the monthly table; the site list and the stages collapse instead.\n4. No revision history is stored: nothing in the UI implies one, and a conflict never surfaces a deactivated record."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

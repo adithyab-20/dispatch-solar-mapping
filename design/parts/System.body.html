@@ -1,0 +1,157 @@
+<div style="width:1180px;min-height:1880px;background:var(--ground);padding:24px">
+  <h1 style="margin:0 0 4px;font-size:20px;font-weight:600">Foundations</h1>
+  <p style="margin:0 0 20px;font-size:12.5px;color:var(--muted);max-width:820px">Everything an implementation agent needs to build the pages without re-deciding anything. Values are literal; contrast figures are measured against the cream ground <span class="mono">#F7F7F8</span>.</p>
+
+  <!-- palette -->
+  <div class="panel" style="border-radius:2px;padding:16px 18px;margin-bottom:16px">
+    <div class="sec" style="margin-bottom:6px">Colour</div>
+    <p style="margin:0 0 12px;font-size:11.5px;color:var(--muted);max-width:820px">Lifted from Dispatch Energy's own site: white and near-white grounds, near-black text, their greys (#E2E2E2, #C2C2C2, #8F8F8F, #58595B) for rules and secondary text, and one accent — their green #006400 — for eyebrow labels, links, the success state and every data mark. One exception, and only one: the PVWatts production bars — the estimate the app exists to produce — are solar orange. Everything else on every screen is green: labels, links, status, map markers, selection, progress, and the irradiance charts in a lighter step of the same green. Solar orange never marks a status, and no status colour ever carries a data series.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+      <div><div style="height:44px;border-radius:2px;background:#F7F7F8;border:1px solid var(--rule)"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#F7F7F8</div><div class="lbl">ground</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#FFFFFF;border:1px solid var(--rule)"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#FFFFFF</div><div class="lbl">card</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#F5F5F5"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#F5F5F5</div><div class="lbl">sunk / disabled</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#E2E2E2"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#E2E2E2</div><div class="lbl">rule</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#C2C2C2"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#C2C2C2</div><div class="lbl">rule, strong</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#101010"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#101010 · 17.8:1</div><div class="lbl">ink — near-black</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#58595B"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#58595B · 6.6:1</div><div class="lbl">muted text</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#767676"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#767676 · 4.2:1</div><div class="lbl">faint — labels ≥10px only</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#C96A1C"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#C96A1C · 3.5:1</div><div class="lbl">solar orange — PVWatts bars only</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#004D00"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#004D00 · 9.5:1</div><div class="lbl">solar, deep — text &amp; hover</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#3E8E4F"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#3E8E4F · 3.8:1</div><div class="lbl">green, light — irradiance data</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#006400"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#006400 · 7.0:1</div><div class="lbl">status: succeeded — Dispatch green</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#8A6100"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#8A6100 · 5.2:1</div><div class="lbl">status: caution</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#B3261E"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#B3261E · 6.1:1</div><div class="lbl">status: failed</div></div>
+      <div><div style="height:44px;border-radius:2px;background:#006400"></div><div class="mono" style="font-size:10.5px;margin-top:5px">#006400 · 9.2:1</div><div class="lbl">Dispatch green — links, labels, success</div></div>
+    </div>
+  </div>
+
+  <!-- type -->
+  <div class="panel" style="border-radius:2px;padding:16px 18px;margin-bottom:16px">
+    <div class="sec" style="margin-bottom:6px">Type</div>
+    <p style="margin:0 0 14px;font-size:11.5px;color:var(--muted);max-width:820px">Poppins for the wordmark, headings and section labels, tracked wide the way Dispatch sets its own headers. IBM Plex Sans for language, IBM Plex Mono with tabular figures for anything numeric or identifying. Corner radii stay at 2px and separation is a rule, not a shadow — flat, like their cards.</p>
+    <div style="display:grid;grid-template-columns:150px 1fr;gap:10px 18px;align-items:baseline">
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">24 / 600 / −.01em</div><div style="font-size:24px;font-weight:600;letter-spacing:-.01em">Desert Bloom Solar</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">15 / 600</div><div style="font-size:15px;font-weight:600">Section heading, list row name</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">11 / 600 / .13em / caps</div><div class="sec">Section label</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">13 / 400 / 1.45</div><div style="font-size:13px">Body copy — explanations, guidance, error prose. Never below 12px anywhere in the interface.</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">9.5 mono / .11em / caps</div><div class="lbl">Field label</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">34 mono / 500 / tnum</div><div><span class="num" style="font-size:34px;letter-spacing:-.02em;color:var(--pv-deep)">179,270</span> <span class="unit" style="font-size:12px">kWh / year</span></div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">13 mono / tnum</div><div class="num" style="font-size:13px">33.43620, −112.12790</div>
+      <div class="mono" style="font-size:10.5px;color:var(--faint)">rule</div><div style="font-size:12px;color:var(--muted)">Every number is tabular-figure mono so columns align and a changing value never shifts its neighbours. Units are always adjacent to the number, never only in a column header.</div>
+    </div>
+  </div>
+
+  <!-- status semantics -->
+  <div class="panel" style="border-radius:2px;padding:16px 18px;margin-bottom:16px">
+    <div class="sec" style="margin-bottom:4px">Status semantics — shape + word + colour, never colour alone</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--rule-strong)" class="lbl">Indicator</th>
+        <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule-strong)" class="lbl">Stored state</th>
+        <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule-strong)" class="lbl">What the reader is told</th>
+        <th style="text-align:left;padding:6px 0 6px 10px;border-bottom:1px solid var(--rule-strong)" class="lbl">On the map</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td style="padding:9px 10px 9px 0;border-bottom:1px solid var(--rule)"><span class="chip c-ok"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="3.4" fill="#006400"></circle></svg>resolved</span></td>
+          <td class="mono" style="padding:9px 10px;border-bottom:1px solid var(--rule);font-size:11px">geocode_status = resolved</td>
+          <td style="padding:9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">Filled disc. Coordinates exist and are shown beside it.</td>
+          <td style="padding:9px 0 9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">Marker</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 10px 9px 0;border-bottom:1px solid var(--rule)"><span class="chip c-run"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3.4" stroke="#006400" stroke-width="1.4" fill="none"></circle><path d="M4.5 1.1a3.4 3.4 0 0 1 3.4 3.4" stroke="#006400" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg>pending</span></td>
+          <td class="mono" style="padding:9px 10px;border-bottom:1px solid var(--rule);font-size:11px">pending</td>
+          <td style="padding:9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">Open arc. Work was started and no outcome is recorded yet.</td>
+          <td style="padding:9px 0 9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">No marker</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 10px 9px 0;border-bottom:1px solid var(--rule)"><span class="chip c-mute"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3.4" stroke="#58595B" stroke-width="1.4" stroke-dasharray="2 1.6" fill="none"></circle></svg>no match found</span></td>
+          <td class="mono" style="padding:9px 10px;border-bottom:1px solid var(--rule);font-size:11px">unresolved</td>
+          <td style="padding:9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">Dashed ring. An answer arrived and it was "nothing here" — an outcome, not a fault. Never coloured as an error.</td>
+          <td style="padding:9px 0 9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">No marker</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 10px 9px 0;border-bottom:1px solid var(--rule)"><span class="chip c-fail"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M2 2l5 5M7 2l-5 5" stroke="#B3261E" stroke-width="1.5" stroke-linecap="round"></path></svg>failed</span></td>
+          <td class="mono" style="padding:9px 10px;border-bottom:1px solid var(--rule);font-size:11px">failed</td>
+          <td style="padding:9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">Cross. Something went wrong at our end or the provider's; the safe message and time are always shown with it.</td>
+          <td style="padding:9px 0 9px 10px;border-bottom:1px solid var(--rule);color:var(--muted)">No marker</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 10px 9px 0"><span class="chip c-mute"><svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><rect x="1.4" y="1.4" width="6.2" height="6.2" rx="1" stroke="#58595B" stroke-width="1.3" fill="none"></rect></svg>blocked</span></td>
+          <td class="mono" style="padding:9px 10px;font-size:11px">blocked</td>
+          <td style="padding:9px 10px;color:var(--muted)">Square. A prerequisite is missing, so nothing was requested. Retry controls are disabled and say why.</td>
+          <td style="padding:9px 0 9px 10px;color:var(--muted)">—</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="background:var(--panel-2);border-radius:2px;padding:10px 12px;margin-top:12px;font-size:11.5px;color:var(--muted)">Wording rule: the interface says <b>no match found</b>, not "unresolved", and <b>blocked</b> is always followed by the reason. The stored state name appears only where an engineer needs it.</div>
+  </div>
+
+  <!-- charts -->
+  <div class="panel" style="border-radius:2px;padding:16px 18px;margin-bottom:16px">
+    <div class="sec" style="margin-bottom:10px">Charts</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:12px;color:var(--muted);line-height:1.65">
+      <ul style="margin:0;padding-left:16px">
+        <li><b style="color:var(--ink)">Form</b> — twelve ordered months of a single measure is a column chart. One measure per chart; never two y-axes.</li>
+        <li><b style="color:var(--ink)">Colour</b> — one hue. Every chart is a single series: PVWatts production in solar orange <span class="mono">#C96A1C</span>, irradiance in the lighter green <span class="mono">#3E8E4F</span>. Height carries the magnitude, so colour never varies within a series.</li>
+        <li><b style="color:var(--ink)">Labels</b> — the peak and trough are labelled directly; the rest are read from the axis or on hover. No number on every column.</li>
+        <li><b style="color:var(--ink)">Grid</b> — three horizontal rules at <span class="mono">#ECECEC</span>, a stronger baseline, no vertical grid, no chart border, no drop shadow.</li>
+      </ul>
+      <ul style="margin:0;padding-left:16px">
+        <li><b style="color:var(--ink)">Legend</b> — none for a single series; the heading names it and states the unit.</li>
+        <li><b style="color:var(--ink)">Small multiples</b> — GHI, DNI and latitude tilt share one 0–8.6 scale so their shapes compare honestly; the shared scale is stated in words beneath them.</li>
+        <li><b style="color:var(--ink)">Hover</b> — a dark tooltip with month, value and unit; the column darkens to <span class="mono">#004D00</span>. Keyboard arrows move the same focus, and the tooltip text is announced.</li>
+        <li><b style="color:var(--ink)">Table</b> — every chart is backed by the same numbers in a months-as-columns table on the same page. The chart is never the only way to read a value.</li>
+        <li><b style="color:var(--ink)">Never</b> — no zero substituted for a missing month, no interpolation across a failed stage, no truncated y-axis.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- interaction / a11y -->
+  <div class="panel" style="border-radius:2px;padding:16px 18px;margin-bottom:16px">
+    <div class="sec" style="margin-bottom:10px">Interaction, keyboard and motion</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:12px;color:var(--muted);line-height:1.65">
+      <ul style="margin:0;padding-left:16px">
+        <li><b style="color:var(--ink)">Focus</b> — a 2px <span class="mono">#101010</span> outline with a 2px offset on every interactive element, including map markers. Never removed, never colour-only.</li>
+        <li><b style="color:var(--ink)">Tab order</b> — skip link, app bar, catalog rows in list order, then the map as one stop; arrow keys then move between markers.</li>
+        <li><b style="color:var(--ink)">Rows</b> — the whole catalog row is one link, minimum 44px tall on touch. Selection is marked by a 4px solar left rule plus a tinted background, so it does not rely on colour alone.</li>
+        <li><b style="color:var(--ink)">Layered detail in the rail</b> — a resting row shows name, address, coordinates and annual production. Hover or focus reveals one extra line: GHI, DNI and latitude-tilt annual averages as three micro-bars in irradiance teal. The selected row keeps that line open, and the map callout carries the same three figures. Nothing else is added on hover.</li>
+        <li><b style="color:var(--ink)">Map ↔ list</b> — hovering or focusing either side highlights the other. Selecting a marker scrolls its row into view and vice versa.</li>
+      </ul>
+      <ul style="margin:0;padding-left:16px">
+        <li><b style="color:var(--ink)">Destructive actions</b> — anything that clears stored results (address change, geocode refresh) states what will be lost before it runs, and its confirming button carries the failed colour.</li>
+        <li><b style="color:var(--ink)">In flight</b> — the control becomes its own progress indicator, is disabled for the duration, and repeat submissions are ignored. Surrounding data stays on screen until it is replaced.</li>
+        <li><b style="color:var(--ink)">Announcements</b> — stage outcome changes are written to a polite live region: "Solar resource retried — succeeded".</li>
+        <li><b style="color:var(--ink)">Reduced motion</b> — under <span class="mono">prefers-reduced-motion</span>, spinners become a static label, map pans jump, and nothing else animates. No motion is load-bearing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- map + layout -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="panel" style="border-radius:2px;padding:16px 18px">
+      <div class="sec" style="margin-bottom:10px">Map styling</div>
+      <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--muted);line-height:1.65">
+        <li>Standard OpenStreetMap raster tiles, desaturated slightly so solar markers stay the brightest thing on screen.</li>
+        <li>Marker: 11px solar disc, 2px panel-coloured ring, plus a soft halo. Selected: 16px, deep solar, 2.5px ring.</li>
+        <li>Fully interactive: drag to pan, scroll or the +/− control to zoom, and a "Fit to sites" control to return to all markers. Keyboard: arrows pan, +/− zoom.</li>
+        <li>Initial view fits the resolved markers, framing the contiguous United States when there are none.</li>
+        <li>Opening or closing the list re-fits the bounds with the rail's width as left padding, so a west-coast marker is never left behind the panel. Collapsing the rail hands the full width to the map.</li>
+        <li>A permanent legend states that only resolved sites appear, and counts the ones that do not.</li>
+        <li>Tile attribution and Nominatim geocoding attribution are separate lines — the geocoding credit also appears on the detail page, which has no map.</li>
+        <li>Nothing on the map triggers a lookup: no search box, no autocomplete, no geocode on pan.</li>
+      </ul>
+    </div>
+    <div class="panel" style="border-radius:2px;padding:16px 18px">
+      <div class="sec" style="margin-bottom:10px">Spacing, rules and panels</div>
+      <ul style="margin:0;padding-left:16px;font-size:12px;color:var(--muted);line-height:1.65">
+        <li>Spacing scale: 2, 4, 6, 8, 10, 12, 14, 16, 18, 24. Panel padding 14–18px; section gap 14px.</li>
+        <li>Separation is a 1px rule, not a shadow. Shadows appear only on the map callout, which floats above tiles.</li>
+        <li>Panels are 1px <span class="mono">#E2E2E2</span> on <span class="mono">#FFFFFF</span>, 3px radius. No nested cards, no card inside a card.</li>
+        <li>A stage that failed carries a 3px left rule in its status colour — the one place a whole panel is tinted.</li>
+        <li>Layout breakpoints: split view ≥1100px, stacked below, phone treatment ≤640px.</li>
+        <li>Catalog rail is fixed at 400px; the map takes the rest and never falls below 560px before stacking.</li>
+      </ul>
+    </div>
+  </div>
+</div>
