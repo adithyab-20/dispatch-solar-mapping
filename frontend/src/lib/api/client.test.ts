@@ -1,0 +1,76 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApiError, apiBaseUrl, apiClient } from "@/lib/api/client";
+import type { SiteListItem } from "@/lib/api/types";
+
+const originalBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+function mockFetchOnce(response: Partial<Response> & { json?: () => unknown }) {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({}),
+    ...response,
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_API_BASE_URL = "http://127.0.0.1:8000/api";
+});
+
+afterEach(() => {
+  process.env.NEXT_PUBLIC_API_BASE_URL = originalBase;
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe("apiBaseUrl", () => {
+  it("reads the configured public base and trims a trailing slash", () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test/api/";
+    expect(apiBaseUrl()).toBe("http://example.test/api");
+  });
+
+  it("falls back to the documented development default", () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    expect(apiBaseUrl()).toBe("http://127.0.0.1:8000/api");
+  });
+});
+
+describe("apiClient.fetchSites", () => {
+  it("requests the sites list against the configured base and returns the rows", async () => {
+    const rows: SiteListItem[] = [
+      { id: 1, name: "A", address: "1 Main", latitude: 40, longitude: -105, geocode_status: "resolved" },
+    ];
+    const fetchMock = mockFetchOnce({ json: async () => rows });
+
+    const result = await apiClient.fetchSites();
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe("http://127.0.0.1:8000/api/sites/");
+    expect(result).toEqual(rows);
+  });
+
+  it("raises a network ApiError when fetch rejects, without leaking details", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED secret host")));
+    await expect(apiClient.fetchSites()).rejects.toMatchObject({ kind: "network" });
+    await expect(apiClient.fetchSites()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("raises an http ApiError carrying the status for a non-2xx response", async () => {
+    mockFetchOnce({ ok: false, status: 503, json: async () => ({}) });
+    await expect(apiClient.fetchSites()).rejects.toMatchObject({ kind: "http", status: 503 });
+  });
+
+  it("raises a parse ApiError when the body is not JSON", async () => {
+    mockFetchOnce({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new Error("Unexpected token");
+      },
+    });
+    await expect(apiClient.fetchSites()).rejects.toMatchObject({ kind: "parse" });
+  });
+});
