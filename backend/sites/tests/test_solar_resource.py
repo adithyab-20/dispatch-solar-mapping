@@ -14,6 +14,7 @@ from pytest_django.fixtures import Settings
 from sites.models import GeocodeStatus, ProcessingStatus, Site
 from sites.services.constants import MONTHS
 from sites.services.geocoding import NOMINATIM_GATEWAY
+from sites.services.pvwatts import PVWATTS_SESSION
 from sites.services.solar_resource import (
     SOLAR_RESOURCE_SESSION,
     SOLAR_RESOURCE_TIMEOUT_SECONDS,
@@ -234,6 +235,11 @@ def test_import_fetches_and_persists_canonical_solar_resource_data_after_commit(
 
     solar_get = Mock(side_effect=assert_pending_then_respond)
     monkeypatch.setattr(SOLAR_RESOURCE_SESSION, "get", solar_get)
+    monkeypatch.setattr(
+        PVWATTS_SESSION,
+        "get",
+        Mock(return_value=Mock(status_code=503, text="provider unavailable")),
+    )
 
     call_command("import_sites", import_path, mode="upsert")
 
@@ -245,7 +251,7 @@ def test_import_fetches_and_persists_canonical_solar_resource_data_after_commit(
     assert site.monthly_solar_data == EXPECTED_MONTHLY_SOLAR_DATA
     assert site.solar_resource_error is None
     assert site.solar_resource_attempted_at is not None
-    assert site.pvwatts_status == ProcessingStatus.BLOCKED
+    assert site.pvwatts_status == ProcessingStatus.FAILED
     solar_get.assert_called_once_with(
         "https://developer.example.test/api/solar/solar_resource/v1.json",
         params={"api_key": "test-api-key", "lat": 40.0, "lon": -105.0},
@@ -279,12 +285,15 @@ def test_each_resolved_site_fetches_its_own_solar_resource_result(
     )
     monkeypatch.setattr(NOMINATIM_GATEWAY.session, "get", nominatim_get)
     monkeypatch.setattr(SOLAR_RESOURCE_SESSION, "get", solar_get)
+    pvwatts_get = Mock(return_value=Mock(status_code=503, text="provider unavailable"))
+    monkeypatch.setattr(PVWATTS_SESSION, "get", pvwatts_get)
 
     call_command("import_sites", import_path, mode="upsert")
 
     sites = list(Site.objects.order_by("id"))
     assert nominatim_get.call_count == 1
     assert solar_get.call_count == 2
+    assert pvwatts_get.call_count == 2
     assert [site.solar_resource_status for site in sites] == [
         ProcessingStatus.SUCCEEDED,
         ProcessingStatus.SUCCEEDED,
