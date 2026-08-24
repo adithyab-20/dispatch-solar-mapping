@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Boston Sample Site",
+    "address": "1 City Hall Square, Boston, MA 02201"
+  },
+  {
+    "name": "Chicago Sample Site",
+    "address": "121 N LaSalle Street, Chicago, IL 60602"
+  },
+  {
+    "name": "Denver Sample Site",
+    "address": "1437 Bannock Street, Denver, CO 80202"
+  },
+  {
+    "name": "Los Angeles Sample Site",
+    "address": "200 N Spring Street, Los Angeles, CA 90012"
+  },
+  {
+    "name": "Seattle Sample Site",
+    "address": "700 5th Avenue, Seattle, WA 98104"
+  }
+]

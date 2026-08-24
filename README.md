@@ -1,9 +1,9 @@
 # Dispatch Solar Mapping
 
 A local Django and React application for mapping U.S. solar sites and showing
-their Solar Resource and PVWatts results. Ticket 2 establishes the backend Site
-domain and its read-only API; provider workflows and the frontend are added in
-later slices.
+their Solar Resource and PVWatts results. The current backend includes the Site
+domain, its read-only API, and an idempotent site-import workflow; provider
+workflows and the frontend are added in later slices.
 
 ## Backend quickstart
 
@@ -15,6 +15,7 @@ cp -n .env.example .env
 cd backend
 uv sync
 uv run python manage.py migrate
+uv run python manage.py import_sites ../data/sites_initial.json --mode upsert
 uv run python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -30,14 +31,29 @@ return `404` by ID. The only allowed browser origins are
 `http://localhost:3000` and `http://127.0.0.1:3000`; cross-origin credentials
 and allow-all CORS are disabled.
 
-Until the import workflow lands, a record can be created through the Django
-shell:
+## Importing sites
+
+The replaceable [`data/sites_initial.json`](data/sites_initial.json) file
+contains five named sample sites across the U.S. Import any file with the same
+contract from `backend/`:
 
 ```sh
-cd backend
-uv run python manage.py shell -c \
-  'from sites.models import Site; Site.objects.create(name="Example Solar", address="200 W Washington St, Chicago, IL")'
+uv run python manage.py import_sites PATH_TO_SITES.json --mode upsert
 ```
+
+The document must be a JSON array. Every row requires string `name` and
+`address` values that are non-blank and remain non-empty after normalization.
+`--mode upsert` is explicit and additive: it creates new normalized
+name/address pairs, leaves active matches untouched, reactivates inactive exact
+matches without resetting their stored provider state, and never deactivates a
+site omitted from the file. Later duplicate pairs are skipped. Invalid rows and
+same-name/different-address or same-address/different-name ambiguities are
+reported without preventing other valid rows from being accepted.
+
+New records start with geocoding `pending` and both downstream stages
+`blocked`. This import slice does not contact external providers; geocoding is
+added by the next workflow ticket. Replace the rows in `data/sites_initial.json`
+when the authoritative site list arrives, then run the same command again.
 
 ## Backend verification
 
