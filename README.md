@@ -1,4 +1,4 @@
-# Dispatch Solar Mapping
+# Dispatch Energy Solar
 
 A local Django + React application for mapping U.S. solar sites and reviewing
 their Solar Resource and PVWatts results. The backend owns the Site domain, an
