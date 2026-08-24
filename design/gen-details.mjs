@@ -50,9 +50,9 @@ const pageHead = (title, sub, actions) => `
     </div>
   </div>`;
 
-const sectionTitle = (t, note = '') => `
+const sectionTitle = (t, note = '', color = '') => `
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px">
-    <h2 class="sec" style="margin:0">${t}</h2>
+    <h2 class="sec" style="margin:0${color ? `;color:${color}` : ''}">${t}</h2>
     ${note ? `<span class="mono" style="font-size:10.5px;color:var(--faint)">${note}</span>` : ''}
   </div>`;
 
@@ -161,7 +161,7 @@ const locationPanel = (resolved, coords, kind, status, ts) => `
 
 const pvwattsSection = (hoverIdx = 5) => `
   <div class="panel" style="border-radius:2px;padding:16px 18px">
-    ${sectionTitle('PVWatts v8 estimate', 'standardised 100 kW scenario · as of 23 Aug 2026, 19:04')}
+    ${sectionTitle('PVWatts v8 estimate', 'standardised 100 kW scenario · as of 23 Aug 2026, 19:04', 'var(--pv-deep)')}
     <div style="display:flex;margin:2px 0 18px;padding:2px 0">
       <div style="flex:1;padding-right:18px">
         <div class="lbl">Annual AC production</div>
@@ -208,9 +208,9 @@ const solarSection = `
     </div>
   </div>`;
 
-const blockedPanel = (title, why) => `
+const blockedPanel = (title, why, color = '') => `
   <div style="border:1px dashed var(--rule-strong);border-radius:2px;padding:20px 18px;background:var(--sunk)">
-    ${sectionTitle(title)}
+    ${sectionTitle(title, '', color)}
     <div style="display:flex;align-items:flex-start;gap:10px;max-width:640px">
       ${ICON.block}
       <div>
@@ -325,7 +325,7 @@ writeFileSync('parts/DetailUnresolved.body.html', page(`
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      ${blockedPanel('PVWatts v8 estimate', 'PVWatts needs latitude and longitude. No request was made, so there is nothing to show — not a zero, not an estimate.')}
+      ${blockedPanel('PVWatts v8 estimate', 'PVWatts needs latitude and longitude. No request was made, so there is nothing to show — not a zero, not an estimate.', 'var(--pv-deep)')}
       ${blockedPanel('Solar resource', 'The solar resource service needs latitude and longitude. No request was made.')}
     </div>
     <div class="panel" style="border-radius:2px;padding:16px 18px">

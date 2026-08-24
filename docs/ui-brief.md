@@ -50,9 +50,10 @@ selection, and progress. The irradiance data marks use a lighter step of that
 green (`#3E8E4F`), and the collapsed-rail progress bar a lighter `#4E9E62`;
 both stay in the green family. Exactly one thing breaks the green — the
 **PVWatts production output**, the estimate the app exists to produce. Its
-monthly production bars are solar orange `#C96A1C`, and its headline annual
-figure is the deep step of that same orange (`#B9601B`). Orange is therefore the
-PVWatts signature and appears nowhere else. A status color never carries a data
+monthly production bars are solar orange `#C96A1C`, and its section heading and
+headline annual figure are the deep step of that same orange (`#B9601B`). Orange
+is therefore the PVWatts signature and appears nowhere else — the one section
+eyebrow that is not the standard green. A status color never carries a data
 series, and the data-mark orange never signals a status. Headings and section
 labels are Poppins tracked wide; cards are flat with 2–3px radii and hairline
 rules, never shadows.
@@ -88,7 +89,7 @@ Measured against the ground `#F7F7F8`.
 | solar, deep | `#004D00` | Green text / hover / column-hover | 9.5:1 |
 | green, light | `#3E8E4F` | Irradiance data marks | 3.8:1 (graphical) |
 | solar orange | `#C96A1C` | PVWatts production bars | 3.5:1 (graphical) |
-| solar orange, deep | `#B9601B` | PVWatts headline annual figure (large text only) | 4.4:1 on panel |
+| solar orange, deep | `#B9601B` | PVWatts section heading and headline figure | 4.4:1 on panel |
 | status: caution | `#8A6100` | Caution / partial | 5.2:1 |
 | status: failed | `#B3261E` | Failure | 6.1:1 |
 
@@ -98,6 +99,13 @@ Grid lines in charts are `#ECECEC`; a stronger baseline sits at `#C2C2C2`.
 short uppercase mono field labels and captions that always sit beside a
 higher-contrast value — never for body copy or a value read on its own. Every
 substantive value uses `ink`, `muted`, or a status color at AA or better.
+
+The deep bar-orange `#B9601B` (4.4:1 on the panel) clears the AA large-text bar
+(3:1) comfortably for the 30–34px headline figure. On the 11px PVWatts section
+eyebrow it sits marginally under AA-normal (4.5:1); this is an accepted trade to
+keep orange as the single PVWatts signature. If strict AA-normal on that label
+is required, deepen it toward `#9A4F14` — but keep the headline figure at
+`#B9601B` so it still reads as the same orange as the bars.
 
 ### Type
 
@@ -202,9 +210,10 @@ Vertical stack, identity first:
    cards (Geocoding · Solar resource · PVWatts), each with its status chip,
    `Last attempted`/`Never attempted` timestamp, a plain-language line, and its
    focused control.
-4. **PVWatts v8 estimate** — the hero. Annual AC production (34px, in the deep
-   bar-orange `#B9601B`, tying the headline to its production bars)
-   plus capacity factor, annual solar radiation, and best month; then the
+4. **PVWatts v8 estimate** — the hero. Its section eyebrow and the Annual AC
+   production figure (34px) are both the deep bar-orange `#B9601B`, tying the
+   whole section to its production bars; capacity factor, annual solar
+   radiation, and best month stay in ink. Then the
    monthly production chart and its backing table.
 5. **Solar resource** — annual GHI, DNI, and latitude-tilt averages, each with
    a small monthly multiple, then the backing monthly table.
